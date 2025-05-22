@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import HeroSection from "@/components/landing/hero-section"
-// import FeatureHighlight from "@/components/landing/feature-highlight"
-// import HowItWorks from "@/components/landing/how-it-works"
-// import Footer from "@/components/landing/footer"
+import FeatureHighlight from "@/components/landing/feature-highlight"
+import HowItWorks from "@/components/landing/how-it-works"
+import Footer from "@/components/landing/footer"
 
 export default function LandingPage() {
   return (
@@ -110,11 +110,11 @@ export default function LandingPage() {
 
       <main className="flex-1">
         <HeroSection />
-        {/* <FeatureHighlight />
-        <HowItWorks /> */}
+        <FeatureHighlight />
+        <HowItWorks /> 
       </main>
 
-      {/* <Footer /> */}
-    </div>
+      <Footer />
+    </div>  
   )
 }
