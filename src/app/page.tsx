@@ -1,103 +1,120 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { Button } from "@/components/ui/button"
+import HeroSection from "@/components/landing/hero-section"
+import FeatureHighlight from "@/components/landing/feature-highlight"
+import HowItWorks from "@/components/landing/how-it-works"
+import Footer from "@/components/landing/footer"
+
+export default function LandingPage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen flex flex-col">
+      <header className="container mx-auto px-4 py-6 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-8 w-8 text-red-600"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
+          <span className="text-xl font-bold">CivicPulse</span>
         </div>
+
+        {/* Mobile menu button */}
+        <div className="md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-700"
+            id="mobile-menu-button"
+            onClick={() => {
+              const menu = document.getElementById("mobile-menu")
+              if (menu) {
+                menu.classList.toggle("hidden")
+              }
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-6 w-6"
+            >
+              <line x1="4" x2="20" y1="12" y2="12" />
+              <line x1="4" x2="20" y1="6" y2="6" />
+              <line x1="4" x2="20" y1="18" y2="18" />
+            </svg>
+          </Button>
+        </div>
+
+        {/* Desktop navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          <a href="#features" className="text-sm font-medium hover:text-red-600 transition-colors">
+            Features
+          </a>
+          <a href="#how-it-works" className="text-sm font-medium hover:text-red-600 transition-colors">
+            How It Works
+          </a>
+          <a href="#contact" className="text-sm font-medium hover:text-red-600 transition-colors">
+            Contact
+          </a>
+        </nav>
+
+        {/* Desktop buttons */}
+        <div className="hidden md:flex items-center gap-4">
+          <Button variant="outline" asChild>
+            <a href="/feed">Log In</a>
+          </Button>
+          <Button asChild>
+            <a href="/signup">Sign Up</a>
+          </Button>
+        </div>
+      </header>
+
+      {/* Mobile menu */}
+      <div id="mobile-menu" className="hidden md:hidden container mx-auto px-4 py-4 bg-white border-b border-gray-200">
+        <nav className="flex flex-col space-y-4">
+          <a href="#features" className="text-sm font-medium hover:text-red-600 transition-colors">
+            Features
+          </a>
+          <a href="#how-it-works" className="text-sm font-medium hover:text-red-600 transition-colors">
+            How It Works
+          </a>
+          <a href="#contact" className="text-sm font-medium hover:text-red-600 transition-colors">
+            Contact
+          </a>
+          <div className="flex flex-col space-y-2 pt-2 border-t border-gray-100">
+            <Button variant="outline" asChild className="w-full">
+              <a href="/feed">Log In</a>
+            </Button>
+            <Button asChild className="w-full">
+              <a href="/signup">Sign Up</a>
+            </Button>
+          </div>
+        </nav>
+      </div>
+
+      <main className="flex-1">
+        <HeroSection />
+        <FeatureHighlight />
+        <HowItWorks /> 
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+
+      <Footer />
+    </div>  
+  )
 }
