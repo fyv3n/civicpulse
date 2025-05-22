@@ -77,11 +77,11 @@ export default function LandingPage() {
         {/* Desktop buttons */}
         <div className="hidden md:flex items-center gap-4">
           <Button variant="outline" asChild>
-            <a href="/feed">Log In</a>
+            <a href="/auth/login">Log In</a>
           </Button>
           <Button asChild>
-            <a href="/signup">Sign Up</a>
-          </Button>
+            <a href="/auth/signup">Sign Up</a>
+          </Button> 
         </div>
       </header>
 
@@ -99,10 +99,10 @@ export default function LandingPage() {
           </a>
           <div className="flex flex-col space-y-2 pt-2 border-t border-gray-100">
             <Button variant="outline" asChild className="w-full">
-              <a href="/feed">Log In</a>
+              <a href="/auth/login">Log In</a>
             </Button>
             <Button asChild className="w-full">
-              <a href="/signup">Sign Up</a>
+              <a href="/auth/signup">Sign Up</a>
             </Button>
           </div>
         </nav>

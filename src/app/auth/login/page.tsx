@@ -1,10 +1,38 @@
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { auth } from "@/lib/firebase/config"
+import { signInWithEmailAndPassword } from "firebase/auth"
 
 export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      router.push("/feed")
+    } catch (err: any) {
+      console.error("Login error:", err)
+      setError(err.message || "Failed to login")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
       <div className="w-full max-w-md">
@@ -31,10 +59,23 @@ export default function LoginPage() {
         <div className="bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200">
           <h1 className="text-xl sm:text-2xl font-bold text-center mb-6">Log in to your account</h1>
 
-          <form className="space-y-4" action="/feed">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="your.email@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
             </div>
 
             <div className="space-y-2">
@@ -44,7 +85,13 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+              />
             </div>
 
             <div className="flex items-center space-x-2">
@@ -54,8 +101,8 @@ export default function LoginPage() {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full" asChild>
-              <Link href="/feed">Log in</Link>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Log in"}
             </Button>
           </form>
 
