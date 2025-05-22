@@ -24,7 +24,7 @@ export default function SignupPage() {
               <path d="M12 8v4" />
               <path d="M12 16h.01" />
             </svg>
-            <span className="text-xl font-bold">BarangayAlert</span>
+            <span className="text-xl font-bold">CivicPulse</span>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export default function SignupPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="text-red-600 hover:underline">
+              <Link href="/auth/login" className="text-red-600 hover:underline">
                 Log in
               </Link>
             </p>
