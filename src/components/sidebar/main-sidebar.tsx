@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -20,15 +20,28 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
+import { auth } from "@/lib/firebase/config"
+import { getUserProfile } from "@/lib/firebase/users"
+import { UserProfile } from "@/lib/firebase/users"
 
-interface SidebarProps {
-  isAdmin?: boolean
-}
-
-export default function MainSidebar({ isAdmin = false }: SidebarProps) {
+export default function MainSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const profile = await getUserProfile(user.uid)
+        setUserProfile(profile)
+      } else {
+        setUserProfile(null)
+      }
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const userMenuItems = [
     {
@@ -167,7 +180,7 @@ export default function MainSidebar({ isAdmin = false }: SidebarProps) {
                 </Tooltip>
               ))}
 
-              {isAdmin && (
+              {userProfile?.role === "admin" && (
                 <>
                   <Separator className="my-2" />
                   <div className={cn("px-3 py-2", collapsed ? "hidden" : "")}>

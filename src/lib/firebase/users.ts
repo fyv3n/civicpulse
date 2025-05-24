@@ -18,6 +18,8 @@ import {
 } from "firebase/firestore"
 import { auth, db } from "./config"
 
+export type UserRole = "user" | "admin" | "moderator"
+
 export interface UserProfile {
   id: string
   email: string
@@ -29,6 +31,7 @@ export interface UserProfile {
   bio?: string
   trustScore: number
   isVerified: boolean
+  role: UserRole
   createdAt: Date
   updatedAt: Date
 }
@@ -59,6 +62,7 @@ export async function createUser(
       barangay,
       trustScore: 0,
       isVerified: false,
+      role: "user", // Default role
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -87,6 +91,39 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
   } catch (error) {
     console.error("Error getting user profile:", error)
     throw error
+  }
+}
+
+export async function updateUserRole(userId: string, role: UserRole): Promise<void> {
+  try {
+    const userRef = doc(db, "users", userId)
+    await updateDoc(userRef, {
+      role,
+      updatedAt: new Date()
+    })
+  } catch (error) {
+    console.error("Error updating user role:", error)
+    throw error
+  }
+}
+
+export async function isAdmin(userId: string): Promise<boolean> {
+  try {
+    const userProfile = await getUserProfile(userId)
+    return userProfile?.role === "admin"
+  } catch (error) {
+    console.error("Error checking admin status:", error)
+    return false
+  }
+}
+
+export async function isModerator(userId: string): Promise<boolean> {
+  try {
+    const userProfile = await getUserProfile(userId)
+    return userProfile?.role === "moderator" || userProfile?.role === "admin"
+  } catch (error) {
+    console.error("Error checking moderator status:", error)
+    return false
   }
 }
 

@@ -8,7 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen flex">
-      <MainSidebar isAdmin={true} />
+      <MainSidebar />
       <main className="flex-1 ml-0 md:ml-64 transition-all duration-300 p-4 md:p-6">{children}</main>
     </div>
   )
