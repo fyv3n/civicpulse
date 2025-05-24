@@ -14,10 +14,10 @@ export default function HeroSection() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 pt-2 md:pt-4 justify-center md:justify-start">
             <Button size="lg" className="w-full sm:w-auto" asChild>
-              <a href="/auth/signup">Get Started</a>
+              <a href="/signup">Get Started</a>
             </Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
-              <a href="/auth/login">Log In</a>
+              <a href="/login">Log In</a>
             </Button>
           </div>
         </div>

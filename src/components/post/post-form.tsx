@@ -33,7 +33,7 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
       if (user) {
         setCurrentUser(user)
       } else {
-        router.push("/auth/login")
+        router.push("/login")
       }
     })
 
