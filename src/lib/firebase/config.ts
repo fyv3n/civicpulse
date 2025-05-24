@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBu0-wfHxWP-7kESYJl_g6LBoBCKe9PuWA",
   authDomain: "civicpulse-a0888.firebaseapp.com",
   projectId: "civicpulse-a0888",
-  sstorageBucket: "civicpulse-a0888.firebasestorage.app",
+  storageBucket: "civicpulse-a0888.firebasestorage.app",
   messagingSenderId: "501341591338",
   appId: "1:501341591338:web:0ba2840b7f4ec4ab1ab053",
   measurementId: "G-MHQLF45PGN"
