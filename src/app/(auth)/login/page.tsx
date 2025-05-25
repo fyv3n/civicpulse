@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/firebase/config"
 import { signInWithEmailAndPassword } from "firebase/auth"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -102,7 +103,14 @@ export default function LoginPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Logging in..." : "Log in"}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <span>Logging in...</span>
+                </div>
+              ) : (
+                "Log in"
+              )}
             </Button>
           </form>
 

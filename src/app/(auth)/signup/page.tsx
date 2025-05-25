@@ -16,29 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 // List of barangays in Olongapo City
 const BARANGAYS = [
   "West Bajac-Bajac",
   // Add more barangays here as we expand
 ]
-
-//todo: add a loading spinner when the user is signing up ✅
-//todo: add a success message when the user is signed up ✅
-//todo: add a error message when the user is not signed up ✅
-//todo: add a verification email to the user ✅
-//todo: add a verification code to the user ✅
-//todo: add a verification button to the user ✅
-//todo: add a verification input to the user ✅
-//todo: verify the user after the verification button is clicked and if the code is correct, then the user is verified
-//todo: if the code is incorrect, then the user is not verified and the user can try again
-//todo: if the user is not verified, then the user can not create a post ✅
-//todo: if the user is not verified, then the user can not comment on a post ✅
-//todo: connect the signup page to the database ✅
-//todo: connect the signup page to the firebase authentication ✅
-//todo: connect the signup page to the firebase database, so each user has a unique id and a unique username so the user can be identified by their username, and the user can have a profile picture and a bio, and the user can have a trust score and a verification status, and see their own post thru their own profile page
-//todo: connect the signup page to the firebase storage? Do i need to?
-
 
 export default function SignupPage() {
   const router = useRouter()
@@ -231,7 +215,14 @@ export default function SignupPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Sign up"}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <span>Creating account...</span>
+                </div>
+              ) : (
+                "Sign up"
+              )}
             </Button>
           </form>
 
