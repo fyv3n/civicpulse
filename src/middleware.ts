@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { auth } from "@/lib/firebase/config"
-import { getUserProfile, isAdmin, isModerator } from "@/lib/firebase/users"
 
 // Paths that require verification
 const RESTRICTED_PATHS = [
@@ -13,7 +11,8 @@ const RESTRICTED_PATHS = [
 // Paths that require admin role
 const ADMIN_PATHS = [
   "/admin",
-  "/barangay-settings"
+  "/barangay-settings",
+  "/moderation"
 ]
 
 // Paths that require moderator role
@@ -22,55 +21,45 @@ const MODERATOR_PATHS = [
 ]
 
 export async function middleware(request: NextRequest) {
-  const session = await auth.currentUser
+  // Get the session cookie
+  const session = request.cookies.get('__session')?.value;
 
-  // If no session, redirect to login
   if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Check if the path requires verification
-  const requiresVerification = RESTRICTED_PATHS.some(path => 
-    request.nextUrl.pathname.startsWith(path)
-  )
+  try {
+    // Get the user role from the session cookie
+    const userData = JSON.parse(session);
+    const userRole = userData.role;
 
-  if (requiresVerification) {
-    const userProfile = await getUserProfile(session.uid)
-    
-    if (!userProfile?.isVerified) {
-      // Redirect to verification page with return URL
-      const returnUrl = encodeURIComponent(request.nextUrl.pathname)
-      return NextResponse.redirect(
-        new URL(`/verify?returnUrl=${returnUrl}`, request.url)
-      )
+    if (!userRole) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
-  }
 
-  // Check if the path requires admin role
-  const requiresAdmin = ADMIN_PATHS.some(path => 
-    request.nextUrl.pathname.startsWith(path)
-  )
+    // Check if the path requires admin role
+    const requiresAdmin = ADMIN_PATHS.some(path => 
+      request.nextUrl.pathname.startsWith(path)
+    );
 
-  if (requiresAdmin) {
-    const isUserAdmin = await isAdmin(session.uid)
-    if (!isUserAdmin) {
-      return NextResponse.redirect(new URL("/feed", request.url))
+    if (requiresAdmin && userRole !== 'admin') {
+      return NextResponse.redirect(new URL("/feed", request.url));
     }
-  }
 
-  // Check if the path requires moderator role
-  const requiresModerator = MODERATOR_PATHS.some(path => 
-    request.nextUrl.pathname.startsWith(path)
-  )
+    // Check if the path requires moderator role
+    const requiresModerator = MODERATOR_PATHS.some(path => 
+      request.nextUrl.pathname.startsWith(path)
+    );
 
-  if (requiresModerator) {
-    const isUserModerator = await isModerator(session.uid)
-    if (!isUserModerator) {
-      return NextResponse.redirect(new URL("/feed", request.url))
+    if (requiresModerator && userRole !== 'moderator' && userRole !== 'admin') {
+      return NextResponse.redirect(new URL("/feed", request.url));
     }
-  }
 
-  return NextResponse.next()
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Middleware error:", error);
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 }
 
 export const config = {
