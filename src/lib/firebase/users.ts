@@ -16,8 +16,11 @@ import {
   where,
   getDocs,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  serverTimestamp,
+  FieldValue
 } from "firebase/firestore"
+import { Timestamp } from "firebase-admin/firestore"
 import { auth, db } from "./config"
 
 export type UserRole = "user" | "admin" | "moderator"
@@ -34,8 +37,8 @@ export interface UserProfile {
   trustScore: number
   isVerified: boolean
   role: UserRole
-  createdAt: Date
-  updatedAt: Date
+  createdAt: Date | Timestamp | FieldValue
+  updatedAt: Date | Timestamp | FieldValue
 }
 
 export async function createUser(
@@ -65,8 +68,8 @@ export async function createUser(
       trustScore: 0,
       isVerified: false,
       role: "user", // Default role
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     }
 
     await setDoc(doc(db, "users", user.uid), userProfile)
@@ -101,7 +104,7 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<vo
     const userRef = doc(db, "users", userId)
     await updateDoc(userRef, {
       role,
-      updatedAt: new Date()
+      updatedAt: serverTimestamp()
     })
   } catch (error) {
     console.error("Error updating user role:", error)
@@ -141,11 +144,33 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   }
 }
 
+// Add this new function to sync verification status
+async function syncVerificationStatus(user: User): Promise<void> {
+  if (!user) return;
+  
+  try {
+    // Force refresh the user to get the latest email verification status
+    await user.reload();
+    
+    // Update Firestore with the latest verification status
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, {
+      isVerified: user.emailVerified,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log("Verification status synced successfully");
+  } catch (error) {
+    console.error("Error syncing verification status:", error);
+    throw error;
+  }
+}
+
 export async function verifyEmail(oobCode: string): Promise<void> {
   try {
     console.log("Starting email verification process...")
     
-    // Apply the verification code directly
+    // Apply the verification code
     try {
       await applyActionCode(auth, oobCode);
       console.log("Verification code applied successfully");
@@ -160,30 +185,9 @@ export async function verifyEmail(oobCode: string): Promise<void> {
       throw new Error("No user found after verification");
     }
 
-    // Update user's verification status in Firestore
-    try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        isVerified: true,
-        updatedAt: new Date()
-      });
-      console.log("Firestore user document updated successfully");
-    } catch (error: any) {
-      console.error("Error updating Firestore document:", error);
-      throw new Error("Failed to update user verification status");
-    }
-
-    // Double check the verification is set
-    const updatedUserDoc = await getDoc(doc(db, "users", user.uid));
-    if (!updatedUserDoc.exists()) {
-      throw new Error("User document not found after update");
-    }
-
-    const userData = updatedUserDoc.data();
-    if (!userData.isVerified) {
-      throw new Error("User verification status not properly updated");
-    }
-
+    // Sync the verification status with Firestore
+    await syncVerificationStatus(user);
+    
     console.log("Email verification process completed successfully");
   } catch (error: any) {
     console.error("Email verification failed:", {
@@ -193,6 +197,22 @@ export async function verifyEmail(oobCode: string): Promise<void> {
     });
     throw error;
   }
+}
+
+// Also add a listener to keep verification status in sync
+export function setupVerificationListener() {
+  if (!auth.currentUser) return;
+
+  // Set up listener for auth state changes
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      try {
+        await syncVerificationStatus(user);
+      } catch (error) {
+        console.error("Error in verification listener:", error);
+      }
+    }
+  });
 }
 
 export async function resendVerificationEmail(): Promise<void> {
@@ -216,11 +236,27 @@ export async function deleteUserAccount(): Promise<void> {
 
     const userId = auth.currentUser.uid
 
-    // Delete user document from Firestore
-    await deleteDoc(doc(db, "users", userId))
+    try {
+      // Delete user document from Firestore first
+      await deleteDoc(doc(db, "users", userId))
+    } catch (error: any) {
+      // Handle Firestore deletion errors
+      if (error.code === "permission-denied") {
+        throw new Error("You don't have permission to delete your account. Please contact support.")
+      }
+      throw error
+    }
 
-    // Delete user from Firebase Auth
-    await deleteUser(auth.currentUser)
+    try {
+      // Delete user from Firebase Auth
+      await deleteUser(auth.currentUser)
+    } catch (error: any) {
+      // Handle Auth deletion errors
+      if (error.code === "auth/requires-recent-login") {
+        throw new Error("For security reasons, please sign out and sign in again before deleting your account.")
+      }
+      throw error
+    }
 
     console.log("User account deleted successfully")
   } catch (error) {

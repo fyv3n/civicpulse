@@ -42,14 +42,19 @@ export default function SettingsPage() {
     } catch (error: any) {
       console.error("Error deleting account:", error)
       
+      // Get a user-friendly error message
       let errorMessage = "Failed to delete account. Please try again."
       
       if (error.message.includes("No user is currently signed in")) {
         errorMessage = "Please sign in to delete your account."
+      } else if (error.message.includes("requires-recent-login") || error.message.includes("sign out and sign in again")) {
+        errorMessage = "For security reasons, please sign out and sign in again before deleting your account."
+      } else if (error.message.includes("permission") || error.message.includes("permissions")) {
+        errorMessage = "You don't have permission to delete your account. Please contact support."
       }
       
       toast({
-        title: "Error",
+        title: "Account Deletion Failed",
         description: errorMessage,
         variant: "destructive"
       })

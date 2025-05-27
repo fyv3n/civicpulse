@@ -34,8 +34,8 @@ export default function VerifyPage() {
         try {
           // Force reload user to ensure we have the latest data
           await user.reload()
-          const returnUrl = searchParams.get('returnUrl')
-          router.push(returnUrl || "/feed")
+        const returnUrl = searchParams.get('returnUrl')
+        router.push(returnUrl || "/feed")
         } catch (error) {
           console.error("Error reloading user:", error)
         }
