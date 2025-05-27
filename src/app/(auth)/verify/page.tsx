@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { verifyEmail, resendVerificationEmail } from "@/lib/firebase/users"
 import { auth } from "@/lib/firebase/config"
 import { onAuthStateChanged } from "firebase/auth"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 export default function VerifyPage() {
   const router = useRouter()
@@ -14,23 +15,30 @@ export default function VerifyPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
+  const [verificationAttempted, setVerificationAttempted] = useState(false)
 
   // Check if we have a verification code in the URL
   useEffect(() => {
     const mode = searchParams.get('mode')
     const oobCode = searchParams.get('oobCode')
 
-    if (mode === 'verifyEmail' && oobCode) {
+    if (mode === 'verifyEmail' && oobCode && !verificationAttempted) {
       handleVerification(oobCode)
     }
-  }, [searchParams])
+  }, [searchParams, verificationAttempted])
 
   // Check auth state and redirect if already verified
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user?.emailVerified) {
-        const returnUrl = searchParams.get('returnUrl')
-        router.push(returnUrl || "/feed")
+        try {
+          // Force reload user to ensure we have the latest data
+          await user.reload()
+          const returnUrl = searchParams.get('returnUrl')
+          router.push(returnUrl || "/feed")
+        } catch (error) {
+          console.error("Error reloading user:", error)
+        }
       }
     })
 
@@ -40,10 +48,9 @@ export default function VerifyPage() {
   const handleVerification = async (code: string) => {
     try {
       setIsLoading(true)
-      await verifyEmail(code)
+      setVerificationAttempted(true)
       
-      // Force refresh the user to get updated emailVerified status
-      await auth.currentUser?.reload()
+      await verifyEmail(code)
       
       toast({
         title: "Email verified",
@@ -55,9 +62,21 @@ export default function VerifyPage() {
       router.push(returnUrl || "/feed")
     } catch (error: any) {
       console.error("Verification error:", error)
+      
+      let errorMessage = "The verification link is invalid or has expired. Please request a new one."
+      
+      // Provide more specific error messages based on the error
+      if (error.message.includes("No user is currently signed in")) {
+        errorMessage = "Please sign in to verify your email."
+      } else if (error.message.includes("Invalid or expired verification link")) {
+        errorMessage = "The verification link is invalid or has expired. Please request a new one."
+      } else if (error.message.includes("Failed to update user verification status")) {
+        errorMessage = "There was an error updating your verification status. Please try again."
+      }
+      
       toast({
         title: "Verification failed",
-        description: "The verification link is invalid or has expired. Please request a new one.",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -76,9 +95,16 @@ export default function VerifyPage() {
       })
     } catch (error: any) {
       console.error("Error resending verification email:", error)
+      
+      let errorMessage = "Failed to resend verification email. Please try again."
+      
+      if (error.message.includes("No user is currently signed in")) {
+        errorMessage = "Please sign in to request a new verification email."
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to resend verification email. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -123,15 +149,23 @@ export default function VerifyPage() {
             <Button 
               onClick={handleResendEmail} 
               className="w-full" 
-              disabled={isResending}
+              disabled={isResending || isLoading}
               variant="outline"
             >
-              {isResending ? "Sending..." : "Resend verification email"}
+              {isResending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <span>Sending...</span>
+                </div>
+              ) : (
+                "Resend verification email"
+              )}
             </Button>
 
             <Button 
               onClick={() => router.push("/login")} 
               className="w-full"
+              disabled={isLoading || isResending}
             >
               Back to login
             </Button>

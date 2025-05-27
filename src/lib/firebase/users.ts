@@ -4,7 +4,8 @@ import {
   updateProfile,
   User,
   applyActionCode,
-  checkActionCode
+  checkActionCode,
+  deleteUser
 } from "firebase/auth"
 import { 
   doc, 
@@ -14,7 +15,8 @@ import {
   query,
   where,
   getDocs,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore"
 import { auth, db } from "./config"
 
@@ -139,25 +141,57 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   }
 }
 
-export async function verifyEmail(code: string): Promise<void> {
+export async function verifyEmail(oobCode: string): Promise<void> {
   try {
-    // Verify the action code
-    await checkActionCode(auth, code)
+    console.log("Starting email verification process...")
     
-    // Apply the verification code
-    await applyActionCode(auth, code)
-    
+    // Apply the verification code directly
+    try {
+      await applyActionCode(auth, oobCode);
+      console.log("Verification code applied successfully");
+    } catch (error: any) {
+      console.error("Error applying verification code:", error);
+      throw new Error("Invalid or expired verification link");
+    }
+
+    // Get the current user after verification
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("No user found after verification");
+    }
+
     // Update user's verification status in Firestore
-    if (auth.currentUser) {
-      const userRef = doc(db, "users", auth.currentUser.uid)
+    try {
+      const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         isVerified: true,
         updatedAt: new Date()
-      })
+      });
+      console.log("Firestore user document updated successfully");
+    } catch (error: any) {
+      console.error("Error updating Firestore document:", error);
+      throw new Error("Failed to update user verification status");
     }
-  } catch (error) {
-    console.error("Error verifying email:", error)
-    throw error
+
+    // Double check the verification is set
+    const updatedUserDoc = await getDoc(doc(db, "users", user.uid));
+    if (!updatedUserDoc.exists()) {
+      throw new Error("User document not found after update");
+    }
+
+    const userData = updatedUserDoc.data();
+    if (!userData.isVerified) {
+      throw new Error("User verification status not properly updated");
+    }
+
+    console.log("Email verification process completed successfully");
+  } catch (error: any) {
+    console.error("Email verification failed:", {
+      error: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    throw error;
   }
 }
 
@@ -170,6 +204,27 @@ export async function resendVerificationEmail(): Promise<void> {
     await sendEmailVerification(auth.currentUser)
   } catch (error) {
     console.error("Error resending verification email:", error)
+    throw error
+  }
+}
+
+export async function deleteUserAccount(): Promise<void> {
+  try {
+    if (!auth.currentUser) {
+      throw new Error("No user is currently signed in")
+    }
+
+    const userId = auth.currentUser.uid
+
+    // Delete user document from Firestore
+    await deleteDoc(doc(db, "users", userId))
+
+    // Delete user from Firebase Auth
+    await deleteUser(auth.currentUser)
+
+    console.log("User account deleted successfully")
+  } catch (error) {
+    console.error("Error deleting user account:", error)
     throw error
   }
 } 

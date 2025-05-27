@@ -112,7 +112,6 @@ export default function FlaggedPostsPanel() {
               </div>
 
               {posts.map((post) => {
-                console.log("Rendering post:", post)
                 return (
                   <div key={post.id} className="space-y-2">
                     <PostCard post={post} />

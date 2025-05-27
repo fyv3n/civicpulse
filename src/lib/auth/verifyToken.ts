@@ -3,10 +3,8 @@ import { auth } from '@/lib/firebase/config';
 export async function verifyToken() {
   try {
     const user = auth.currentUser;
-    if (!user) {
-      throw new Error('No user logged in');
-    }
-
+    
+    if (!user) throw new Error('No user logged in');
     const token = await user.getIdToken();
     const response = await fetch('/api/verify', {
       method: 'POST',
@@ -16,14 +14,20 @@ export async function verifyToken() {
       },
     });
 
-    if (!response.ok) {
-      throw new Error('Token verification failed');
+    // Try to parse the response as JSON
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      throw new Error('Failed to parse server response');
     }
 
-    const data = await response.json();
-    return data.user;
+    if (!response.ok) {
+      throw new Error(errorData.details || errorData.error || 'Token verification failed');
+    }
+    
+    return errorData;
   } catch (error) {
-    console.error('Token verification error:', error);
     throw error;
   }
-} 
+}

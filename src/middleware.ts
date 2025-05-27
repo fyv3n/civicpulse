@@ -1,27 +1,11 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// Paths that require verification
-const RESTRICTED_PATHS = [
-  "/create",
-  "/comment",
-  "/profile/edit"
-]
-
-// Paths that require admin role
-const ADMIN_PATHS = [
-  "/admin",
-  "/barangay-settings",
-  "/moderation"
-]
-
-// Paths that require moderator role
-const MODERATOR_PATHS = [
-  "/moderation"
-]
+const ADMIN_PATHS = ["/admin", "/barangay-settings", "/moderation"];
+const MODERATOR_PATHS = ["/moderation"];
+const RESTRICTED_PATHS = ["/create", "/comment", "/profile/edit"];
 
 export async function middleware(request: NextRequest) {
-  // Get the session cookie
   const session = request.cookies.get('__session')?.value;
 
   if (!session) {
@@ -29,7 +13,6 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Get the user role from the session cookie
     const userData = JSON.parse(session);
     const userRole = userData.role;
 
@@ -37,27 +20,23 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Check if the path requires admin role
-    const requiresAdmin = ADMIN_PATHS.some(path => 
-      request.nextUrl.pathname.startsWith(path)
-    );
+    const path = request.nextUrl.pathname;
 
-    if (requiresAdmin && userRole !== 'admin') {
+    if (ADMIN_PATHS.some(p => path.startsWith(p)) && userRole !== 'admin') {
       return NextResponse.redirect(new URL("/feed", request.url));
     }
 
-    // Check if the path requires moderator role
-    const requiresModerator = MODERATOR_PATHS.some(path => 
-      request.nextUrl.pathname.startsWith(path)
-    );
-
-    if (requiresModerator && userRole !== 'moderator' && userRole !== 'admin') {
+    if (MODERATOR_PATHS.some(p => path.startsWith(p)) && !['admin', 'moderator'].includes(userRole)) {
       return NextResponse.redirect(new URL("/feed", request.url));
+    }
+
+    if (RESTRICTED_PATHS.some(p => path.startsWith(p)) && !userRole) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return NextResponse.next();
-  } catch (error) {
-    console.error("Middleware error:", error);
+  } catch (err) {
+    console.error('Middleware error:', err);
     return NextResponse.redirect(new URL("/login", request.url));
   }
 }
@@ -70,5 +49,5 @@ export const config = {
     "/admin/:path*",
     "/barangay-settings/:path*",
     "/moderation/:path*"
-  ]
-} 
+  ],
+};

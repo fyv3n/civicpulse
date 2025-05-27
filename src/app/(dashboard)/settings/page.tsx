@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -5,8 +9,56 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
+import { deleteUserAccount } from "@/lib/firebase/users"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export default function SettingsPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true)
+      await deleteUserAccount()
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account has been deleted successfully.",
+      })
+      
+      router.push("/login")
+    } catch (error: any) {
+      console.error("Error deleting account:", error)
+      
+      let errorMessage = "Failed to delete account. Please try again."
+      
+      if (error.message.includes("No user is currently signed in")) {
+        errorMessage = "Please sign in to delete your account."
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
@@ -134,6 +186,66 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-500">Share your precise location when reporting emergencies.</p>
               </div>
               <Switch id="location-sharing" defaultChecked />
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="p-6">
+          <h2 className="text-lg font-medium mb-4 text-red-600">Danger Zone</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="delete-account" className="text-base text-red-600">
+                  Delete Account
+                </Label>
+                <p className="text-sm text-gray-500">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+              </div>
+              <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="destructive"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <LoadingSpinner size="sm" />
+                        <span>Deleting...</span>
+                      </div>
+                    ) : (
+                      "Delete Account"
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. This will permanently delete your account
+                      and remove all associated data.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                    >
+                      Delete Account
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

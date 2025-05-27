@@ -1,4 +1,3 @@
-/** @type {import('next').NextConfig} */
 const webpack = require('webpack');
 
 const nextConfig = {
@@ -11,19 +10,19 @@ const nextConfig = {
         tls: false,
         crypto: require.resolve('crypto-browserify'),
         stream: require.resolve('stream-browserify'),
-        url: require.resolve('url'),
+        url: require.resolve('url/'),
         zlib: require.resolve('browserify-zlib'),
         http: require.resolve('stream-http'),
         https: require.resolve('https-browserify'),
-        assert: require.resolve('assert'),
-        os: require.resolve('os-browserify'),
+        assert: require.resolve('assert/'),
+        os: require.resolve('os-browserify/browser'),
         path: require.resolve('path-browserify'),
-        process: require.resolve('process/browser'), // fixed this key
+        process: require.resolve('process/browser'),
       };
 
       config.resolve.alias = {
         ...(config.resolve.alias || {}),
-        'node:process': 'process/browser', // handle node: scheme
+        'node:process': 'process/browser',
       };
 
       config.plugins.push(
@@ -35,6 +34,11 @@ const nextConfig = {
     }
 
     return config;
+  },
+
+  // ✅ Only expose this to the browser
+  env: {
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   },
 };
 
