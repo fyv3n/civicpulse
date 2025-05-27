@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import PostCard from "@/components/post/post-card"
-import PostForm from "@/components/post/post-form"
 import { Button } from "@/components/ui/button"
 import { Plus, Filter } from "lucide-react"
 import { getPosts, type Post } from "@/lib/firebase/posts"
@@ -77,7 +76,7 @@ export default function FeedPage() {
             Filter
           </Button>
           <Button size="sm" asChild className="text-xs sm:text-sm">
-            <a href="/feed">
+            <a href="/create">
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               New Post
             </a>
@@ -86,10 +85,6 @@ export default function FeedPage() {
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">{error}</div>}
-
-      <div className="mb-6">
-        <PostForm onPostCreated={loadPosts} />
-      </div>
 
       <div className="space-y-4 sm:space-y-6">
         {loading && !loadingTimeout ? (
