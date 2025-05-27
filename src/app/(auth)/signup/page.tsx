@@ -1,10 +1,108 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
+import { createUser } from "@/lib/firebase/users"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
+import { FirebaseError } from "firebase/app"
+
+// List of barangays in Olongapo City
+const BARANGAYS = [
+  "West Bajac-Bajac",
+  // Add more barangays here as we expand
+]
 
 export default function SignupPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    barangay: "",
+    password: "",
+    termsAccepted: false
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.termsAccepted) {
+      toast({
+        title: "Terms not accepted",
+        description: "Please accept the terms and conditions to continue",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!formData.barangay) {
+      toast({
+        title: "Barangay not selected",
+        description: "Please select your barangay",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      await createUser(
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName,
+        formData.barangay
+      )
+
+      toast({
+        title: "Account created",
+        description: "Please check your email to verify your account",
+      })
+
+      router.push("/verify")
+    } catch (error: unknown) {
+      console.error("Signup error:", error)
+      let errorMessage = "Something went wrong. Please try again."
+      
+      if (error instanceof FirebaseError) {
+        errorMessage = error.message
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      toast({
+        title: "Error creating account",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value, type, checked } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : value
+    }))
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
       <div className="w-full max-w-md">
@@ -31,39 +129,89 @@ export default function SignupPage() {
         <div className="bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200">
           <h1 className="text-xl sm:text-2xl font-bold text-center mb-6">Create an account</h1>
 
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="first-name">First name</Label>
-                <Input id="first-name" required />
+                <Label htmlFor="firstName">First name</Label>
+                <Input 
+                  id="firstName" 
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required 
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last-name">Last name</Label>
-                <Input id="last-name" required />
+                <Label htmlFor="lastName">Last name</Label>
+                <Input 
+                  id="lastName" 
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required 
+                />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="your.email@example.com" 
+                value={formData.email}
+                onChange={handleChange}
+                required 
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="barangay">Barangay</Label>
-              <Input id="barangay" placeholder="Your barangay name" required />
+              <Select
+                value={formData.barangay}
+                onValueChange={(value) => 
+                  setFormData(prev => ({ ...prev, barangay: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your barangay" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BARANGAYS.map((barangay) => (
+                    <SelectItem key={barangay} value={barangay}>
+                      {barangay}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Currently only available for West Bajac-Bajac residents
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                value={formData.password}
+                onChange={handleChange}
+                required 
+              />
               <p className="text-xs text-gray-500">
                 Must be at least 8 characters with a number and a special character.
               </p>
             </div>
 
             <div className="flex items-start space-x-2">
-              <Checkbox id="terms" required className="mt-1" />
-              <Label htmlFor="terms" className="text-sm">
+              <Checkbox 
+                id="termsAccepted" 
+                checked={formData.termsAccepted}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, termsAccepted: checked as boolean }))
+                }
+                required 
+                className="mt-1" 
+              />
+              <Label htmlFor="termsAccepted" className="text-sm">
                 I agree to the{" "}
                 <Link href="/terms" className="text-red-600 hover:underline">
                   Terms of Service
@@ -75,8 +223,15 @@ export default function SignupPage() {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full">
-              Sign up
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <span>Creating account...</span>
+                </div>
+              ) : (
+                "Sign up"
+              )}
             </Button>
           </form>
 

@@ -104,7 +104,7 @@ export default function FeedPage() {
           ))
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">You've caught up! 🎉</p>
+            <p className="text-gray-500 text-lg">You&apos;ve caught up! 🎉</p>
             <p className="text-gray-400 mt-2">Be the first to share something with the community.</p>
           </div>
         )}

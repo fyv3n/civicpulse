@@ -11,9 +11,9 @@ import { Switch } from "@/components/ui/switch"
 import { MapPin, AlertTriangle, Camera } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createPost } from "@/lib/firebase/posts"
-import { auth } from "@/lib/firebase/config"
 import { useToast } from "@/components/ui/use-toast"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
+import { useAuth } from "@/contexts/auth-context"
 
 interface PostFormProps {
   onPostCreated?: () => void
@@ -22,6 +22,7 @@ interface PostFormProps {
 export default function PostForm({ onPostCreated }: PostFormProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { user } = useAuth()
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [location, setLocation] = useState("")
@@ -32,12 +33,30 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!auth.currentUser) {
+    if (!user) {
       toast({
-        title: "Authentication Error",
+        title: "Authentication Required",
         description: "You must be logged in to create a post",
         variant: "destructive",
       })
+      router.push("/login")
+      return
+    }
+
+    // Force refresh user status before checking
+    try {
+      await user.reload()
+    } catch (error) {
+      console.error("Error refreshing user status:", error)
+    }
+
+    if (!user.emailVerified) {
+      toast({
+        title: "Verification Required",
+        description: "Please verify your email before creating posts",
+        variant: "destructive",
+      })
+      router.push("/verify")
       return
     }
 
@@ -59,31 +78,33 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
         content,
         location,
         isEmergency,
-        userId: auth.currentUser.uid,
+        userId: user.uid,
         author: {
-          name: auth.currentUser.displayName || "Anonymous",
-          avatar: auth.currentUser.photoURL || "/placeholder.svg?height=40&width=40",
-          trustScore: 0, // Default trust score for new users
-          isVerified: false // Default verification status
+          name: user.displayName || "Anonymous",
+          avatar: user.photoURL || "/placeholder.svg?height=40&width=40",
+          trustScore: 0,
+          isVerified: user.emailVerified
         },
         status: "pending",
         createdAt: new Date(),
         commentCount: 0,
-        // Media handling would go here
       })
 
       toast({
-        title: "Post created",
-        description: "Your post has been shared with the community",
+        title: "Success!",
+        description: isEmergency 
+          ? "Your emergency post has been created and will be reviewed promptly."
+          : "Your post has been created and will be visible in the community feed.",
       })
 
       // Call the onPostCreated callback if provided
       onPostCreated?.()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating post:", error)
+      const errorMessage = error instanceof Error ? error.message : "There was an error creating your post. Please try again. If the problem persists, contact support."
       toast({
-        title: "Error",
-        description: "Failed to create post. Please try again.",
+        title: "Post Creation Failed",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {

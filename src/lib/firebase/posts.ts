@@ -11,8 +11,6 @@ import {
   orderBy,
   limit,
   Timestamp,
-  DocumentData,
-  getDoc,
 } from "firebase/firestore"
 
 export interface Post {

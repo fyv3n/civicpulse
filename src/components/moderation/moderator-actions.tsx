@@ -23,8 +23,7 @@ export default function ModeratorActions({ postId }: ModeratorActionsProps) {
   const [rejectReason, setRejectReason] = useState("")
 
   const handleVerify = () => {
-    console.log("Verifying post:", postId)
-    // Implement verification logic
+    //todo implement verification logic for post
   }
 
   const handleReject = () => {
