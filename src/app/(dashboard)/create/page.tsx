@@ -70,6 +70,7 @@ export default function CreatePostPage() {
     return null
   }
 
+
   const handlePostCreated = () => {
     try {
       router.push("/feed")
