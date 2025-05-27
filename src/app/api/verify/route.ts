@@ -77,17 +77,15 @@ export async function POST(req: Request) {
           }
         }
       );
-    } catch (verifyError: any) {
-      console.error('Token verification error:', {
-        name: verifyError?.name,
-        message: verifyError?.message,
-        code: verifyError?.code,
-        stack: verifyError?.stack
-      });
+    } catch (verifyError: unknown) {
+      console.error('Token verification error:', verifyError);
+      
+      const errorMessage = verifyError instanceof Error ? verifyError.message : 'Unknown error';
+      
       return new NextResponse(
         JSON.stringify({ 
           error: 'Token verification failed',
-          details: verifyError?.message 
+          details: errorMessage
         }),
         { 
           status: 401,
@@ -97,16 +95,15 @@ export async function POST(req: Request) {
         }
       );
     }
-  } catch (error: any) {
-    console.error('Verify error details:', {
-      name: error?.name,
-      message: error?.message,
-      stack: error?.stack
-    });
+  } catch (error: unknown) {
+    console.error('Verify error details:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
     return new NextResponse(
       JSON.stringify({ 
         error: 'Verification failed',
-        details: error?.message 
+        details: errorMessage
       }),
       { 
         status: 500,

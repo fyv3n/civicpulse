@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { verifyEmail, resendVerificationEmail } from "@/lib/firebase/users"
 import { auth } from "@/lib/firebase/config"
 import { onAuthStateChanged } from "firebase/auth"
+import { FirebaseError } from "firebase/app"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 export default function VerifyPage() {
@@ -17,6 +18,47 @@ export default function VerifyPage() {
   const [isResending, setIsResending] = useState(false)
   const [verificationAttempted, setVerificationAttempted] = useState(false)
 
+  const handleVerification = useCallback(async (code: string) => {
+    try {
+      setIsLoading(true)
+      setVerificationAttempted(true)
+      
+      await verifyEmail(code)
+      
+      toast({
+        title: "Email verified",
+        description: "Your email has been verified successfully. You can now use all features.",
+      })
+      
+      // Redirect to feed or return URL if provided
+      const returnUrl = searchParams.get('returnUrl')
+      router.push(returnUrl || "/feed")
+    } catch (error: unknown) {
+      console.error("Verification error:", error)
+      
+      let errorMessage = "The verification link is invalid or has expired. Please request a new one."
+      
+      // Provide more specific error messages based on the error
+      if (error instanceof FirebaseError || error instanceof Error) {
+        if (error.message.includes("No user is currently signed in")) {
+          errorMessage = "Please sign in to verify your email."
+        } else if (error.message.includes("Invalid or expired verification link")) {
+          errorMessage = "The verification link is invalid or has expired. Please request a new one."
+        } else if (error.message.includes("Failed to update user verification status")) {
+          errorMessage = "There was an error updating your verification status. Please try again."
+        }
+      }
+      
+      toast({
+        title: "Verification failed",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router, searchParams, toast])
+
   // Check if we have a verification code in the URL
   useEffect(() => {
     const mode = searchParams.get('mode')
@@ -25,7 +67,7 @@ export default function VerifyPage() {
     if (mode === 'verifyEmail' && oobCode && !verificationAttempted) {
       handleVerification(oobCode)
     }
-  }, [searchParams, verificationAttempted])
+  }, [searchParams, verificationAttempted, handleVerification])
 
   // Check auth state and redirect if already verified
   useEffect(() => {
@@ -45,45 +87,6 @@ export default function VerifyPage() {
     return () => unsubscribe()
   }, [router, searchParams])
 
-  const handleVerification = async (code: string) => {
-    try {
-      setIsLoading(true)
-      setVerificationAttempted(true)
-      
-      await verifyEmail(code)
-      
-      toast({
-        title: "Email verified",
-        description: "Your email has been verified successfully. You can now use all features.",
-      })
-      
-      // Redirect to feed or return URL if provided
-      const returnUrl = searchParams.get('returnUrl')
-      router.push(returnUrl || "/feed")
-    } catch (error: any) {
-      console.error("Verification error:", error)
-      
-      let errorMessage = "The verification link is invalid or has expired. Please request a new one."
-      
-      // Provide more specific error messages based on the error
-      if (error.message.includes("No user is currently signed in")) {
-        errorMessage = "Please sign in to verify your email."
-      } else if (error.message.includes("Invalid or expired verification link")) {
-        errorMessage = "The verification link is invalid or has expired. Please request a new one."
-      } else if (error.message.includes("Failed to update user verification status")) {
-        errorMessage = "There was an error updating your verification status. Please try again."
-      }
-      
-      toast({
-        title: "Verification failed",
-        description: errorMessage,
-        variant: "destructive"
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleResendEmail = async () => {
     try {
       setIsResending(true)
@@ -93,13 +96,15 @@ export default function VerifyPage() {
         title: "Verification email sent",
         description: "Please check your email for the verification link.",
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error resending verification email:", error)
       
       let errorMessage = "Failed to resend verification email. Please try again."
       
-      if (error.message.includes("No user is currently signed in")) {
-        errorMessage = "Please sign in to request a new verification email."
+      if (error instanceof FirebaseError || error instanceof Error) {
+        if (error.message.includes("No user is currently signed in")) {
+          errorMessage = "Please sign in to request a new verification email."
+        }
       }
       
       toast({

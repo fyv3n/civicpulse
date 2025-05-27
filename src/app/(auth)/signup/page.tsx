@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
+import { FirebaseError } from "firebase/app"
 
 // List of barangays in Olongapo City
 const BARANGAYS = [
@@ -74,11 +75,19 @@ export default function SignupPage() {
       })
 
       router.push("/verify")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error)
+      let errorMessage = "Something went wrong. Please try again."
+      
+      if (error instanceof FirebaseError) {
+        errorMessage = error.message
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
       toast({
         title: "Error creating account",
-        description: error.message || "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {

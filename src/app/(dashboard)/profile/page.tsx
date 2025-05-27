@@ -7,11 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Pencil, MapPin, Shield, Calendar, CheckCircle2 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore"
+import { doc, getDoc, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { useToast } from "@/hooks/use-toast"
 import { sendEmailVerification } from "firebase/auth"
-
 
 interface UserData {
   displayName: string

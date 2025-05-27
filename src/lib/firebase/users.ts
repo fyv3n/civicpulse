@@ -4,7 +4,6 @@ import {
   updateProfile,
   User,
   applyActionCode,
-  checkActionCode,
   deleteUser
 } from "firebase/auth"
 import { 
@@ -22,6 +21,7 @@ import {
 } from "firebase/firestore"
 import { Timestamp } from "firebase-admin/firestore"
 import { auth, db } from "./config"
+import { FirebaseError } from "firebase/app"
 
 export type UserRole = "user" | "admin" | "moderator"
 
@@ -174,9 +174,12 @@ export async function verifyEmail(oobCode: string): Promise<void> {
     try {
       await applyActionCode(auth, oobCode);
       console.log("Verification code applied successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error applying verification code:", error);
-      throw new Error("Invalid or expired verification link");
+      if (error instanceof FirebaseError) {
+        throw new Error("Invalid or expired verification link");
+      }
+      throw error;
     }
 
     // Get the current user after verification
@@ -189,11 +192,11 @@ export async function verifyEmail(oobCode: string): Promise<void> {
     await syncVerificationStatus(user);
     
     console.log("Email verification process completed successfully");
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Email verification failed:", {
-      error: error.message,
-      code: error.code,
-      stack: error.stack
+      message: error instanceof Error ? error.message : "Unknown error",
+      code: error instanceof FirebaseError ? error.code : undefined,
+      stack: error instanceof Error ? error.stack : undefined
     });
     throw error;
   }
@@ -239,9 +242,9 @@ export async function deleteUserAccount(): Promise<void> {
     try {
       // Delete user document from Firestore first
       await deleteDoc(doc(db, "users", userId))
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle Firestore deletion errors
-      if (error.code === "permission-denied") {
+      if (error instanceof FirebaseError && error.code === "permission-denied") {
         throw new Error("You don't have permission to delete your account. Please contact support.")
       }
       throw error
@@ -250,9 +253,9 @@ export async function deleteUserAccount(): Promise<void> {
     try {
       // Delete user from Firebase Auth
       await deleteUser(auth.currentUser)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle Auth deletion errors
-      if (error.code === "auth/requires-recent-login") {
+      if (error instanceof FirebaseError && error.code === "auth/requires-recent-login") {
         throw new Error("For security reasons, please sign out and sign in again before deleting your account.")
       }
       throw error

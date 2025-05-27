@@ -11,7 +11,6 @@ import { Switch } from "@/components/ui/switch"
 import { MapPin, AlertTriangle, Camera } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createPost } from "@/lib/firebase/posts"
-import { auth } from "@/lib/firebase/config"
 import { useToast } from "@/components/ui/use-toast"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
 import { useAuth } from "@/contexts/auth-context"
@@ -100,11 +99,12 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
 
       // Call the onPostCreated callback if provided
       onPostCreated?.()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating post:", error)
+      const errorMessage = error instanceof Error ? error.message : "There was an error creating your post. Please try again. If the problem persists, contact support."
       toast({
         title: "Post Creation Failed",
-        description: error.message || "There was an error creating your post. Please try again. If the problem persists, contact support.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {

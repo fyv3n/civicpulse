@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/lib/firebase/config"
 import { verifyToken } from "@/lib/auth/verifyToken"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,11 +23,11 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       await verifyToken() // session key
       router.push("/feed")
-    } catch (err: any) {
-      setError(err.message || "Failed to login")
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to login"
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

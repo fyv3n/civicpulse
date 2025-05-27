@@ -18,7 +18,7 @@ export async function verifyToken() {
     let errorData;
     try {
       errorData = await response.json();
-    } catch (e) {
+    } catch {  // Removed the unused parameter entirely
       throw new Error('Failed to parse server response');
     }
 

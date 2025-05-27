@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/firebase/config"
-import { getUserProfile, isAdmin, isModerator } from "@/lib/firebase/users"
+import { isAdmin, isModerator } from "@/lib/firebase/users"
 
 interface RoleGuardProps {
   children: React.ReactNode

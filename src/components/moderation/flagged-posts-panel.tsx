@@ -1,12 +1,11 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, CheckCircle, XCircle, AlertOctagon } from "lucide-react"
 import ModeratorActions from "@/components/moderation/moderator-actions"
 import PostCard from "@/components/post/post-card"
-
 
 interface Post {
   id: string
@@ -67,8 +66,6 @@ const mockPosts: Post[] = [
 ]
 
 export default function FlaggedPostsPanel() {
-  const [posts, setPosts] = useState<Post[]>(mockPosts)
-
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200">
       <div className="p-3 sm:p-4 border-b border-gray-200">
@@ -83,7 +80,7 @@ export default function FlaggedPostsPanel() {
               <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Pending</span>
               <Badge variant="secondary" className="ml-1 text-xs">
-                {posts.length}
+                {mockPosts.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="verified" className="text-xs sm:text-sm">
@@ -98,7 +95,7 @@ export default function FlaggedPostsPanel() {
         </div>
 
         <TabsContent value="pending" className="p-3 sm:p-4 space-y-4">
-          {posts.length > 0 ? (
+          {mockPosts.length > 0 ? (
             <>
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 flex items-start gap-3">
                 <AlertOctagon className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
@@ -111,7 +108,7 @@ export default function FlaggedPostsPanel() {
                 </div>
               </div>
 
-              {posts.map((post) => {
+              {mockPosts.map((post) => {
                 return (
                   <div key={post.id} className="space-y-2">
                     <PostCard post={post} />

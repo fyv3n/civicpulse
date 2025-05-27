@@ -82,7 +82,7 @@ export default function CreatePostPage() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold">Create New Post</h1>
-        <p className="text-gray-600 mt-1">Share what's happening in your community</p>
+        <p className="text-gray-600 mt-1">Share what&apos;s happening in your community</p>
       </div>
 
       <PostForm onPostCreated={handlePostCreated} />
