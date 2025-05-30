@@ -80,7 +80,36 @@ export default function MainSidebar({ isAdmin = false }: SidebarProps) {
   ]
 
   return (
-    <>
+    <div className="relative min-h-screen">
+      {/* Top Bar */}
+      <nav className="sticky top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center px-4 z-50">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-6 w-6 text-red-600"
+          >
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
+          <span className="text-lg font-bold">CivicPulse</span>
+        </div>
+      </nav>
+
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
@@ -90,45 +119,16 @@ export default function MainSidebar({ isAdmin = false }: SidebarProps) {
         />
       )}
 
-      {/* Mobile Toggle Button */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
-        onClick={() => setMobileOpen(!mobileOpen)}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out",
+          "fixed top-16 bottom-0 left-0 z-30 flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out",
           collapsed ? "w-16" : "w-64",
-          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 h-16">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6 text-red-600"
-              >
-                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                <path d="M12 8v4" />
-                <path d="M12 16h.01" />
-              </svg>
-              <span className="text-lg font-bold">CivicPulse</span>
-            </div>
-          )}
+        {/* Collapse Button - Only show on desktop */}
+        <div className="hidden md:flex items-center justify-end p-4">
           <Button
             variant="ghost"
             size="icon"
@@ -140,7 +140,7 @@ export default function MainSidebar({ isAdmin = false }: SidebarProps) {
           </Button>
         </div>
 
-        <Separator />
+        <Separator className="hidden md:block" />
 
         {/* Main Menu */}
         <TooltipProvider delayDuration={0}>
@@ -228,6 +228,6 @@ export default function MainSidebar({ isAdmin = false }: SidebarProps) {
           </div>
         </TooltipProvider>
       </aside>
-    </>
+    </div>
   )
 }
