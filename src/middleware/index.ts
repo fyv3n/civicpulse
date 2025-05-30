@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const ADMIN_PATHS = ["/admin", "/barangay-settings", "/moderation"];
-const MODERATOR_PATHS = ["/moderation"];
-const RESTRICTED_PATHS = ["/create", "/comment", "/profile/edit"];
+import { ADMIN_PATHS, MODERATOR_PATHS, RESTRICTED_PATHS } from "./constants/routes";
 
 export async function middleware(request: NextRequest) {
   const session = request.cookies.get('__session')?.value;
@@ -50,4 +47,4 @@ export const config = {
     "/barangay-settings/:path*",
     "/moderation/:path*"
   ],
-};
+}; 
