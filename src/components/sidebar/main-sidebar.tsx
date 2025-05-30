@@ -12,8 +12,6 @@ import {
   LogOut,
   Shield,
   Building,
-  ChevronLeft,
-  ChevronRight,
   Menu,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
