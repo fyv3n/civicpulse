@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,12 +22,92 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { FirebaseError } from "firebase/app"
+import { useAuth } from "@/contexts/auth-context"
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase/config"
+import type { UserProfile } from "@/lib/firebase/users"
 
 export default function SettingsPage() {
+  const { user } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [userData, setUserData] = useState<UserProfile | null>(null)
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    barangay: "",
+    bio: "",
+  })
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) {
+        router.push("/login")
+        return
+      }
+      
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid))
+        if (userDoc.exists()) {
+          const data = userDoc.data() as UserProfile
+          setUserData(data)
+          setFormData({
+            firstName: data.firstName || "",
+            lastName: data.lastName || "",
+            email: data.email || "",
+            barangay: data.barangay || "",
+            bio: data.bio || "",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load user data"
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [user, router, toast])
+
+  const handleSaveChanges = async () => {
+    if (!user || !userData) return
+
+    try {
+      setIsSaving(true)
+      await updateDoc(doc(db, "users", user.uid), {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        displayName: `${formData.firstName} ${formData.lastName}`,
+        barangay: formData.barangay,
+        bio: formData.bio,
+        updatedAt: serverTimestamp()
+      })
+
+      toast({
+        title: "Success",
+        description: "Your settings have been saved."
+      })
+    } catch (error) {
+      console.error("Error saving changes:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save changes"
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const handleDeleteAccount = async () => {
     try {
@@ -67,6 +147,14 @@ export default function SettingsPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
@@ -78,32 +166,43 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first-name">First name</Label>
-                <Input id="first-name" defaultValue="Juan" />
+                <Input 
+                  id="first-name" 
+                  value={formData.firstName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last-name">Last name</Label>
-                <Input id="last-name" defaultValue="Dela Cruz" />
+                <Input 
+                  id="last-name" 
+                  value={formData.lastName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
-              <Input id="email" type="email" defaultValue="juan.delacruz@example.com" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone number</Label>
-              <Input id="phone" type="tel" defaultValue="+63 912 345 6789" />
+              <Input 
+                id="email" 
+                type="email" 
+                value={formData.email}
+                disabled
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="barangay">Barangay</Label>
-              <Select defaultValue="barangay-123">
+              <Select 
+                value={formData.barangay}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, barangay: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select barangay" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="barangay-123">Barangay 123</SelectItem>
+                  <SelectItem value="barangay-123">West Bajac-Bajac</SelectItem>
                   <SelectItem value="barangay-124">Barangay 124</SelectItem>
                   <SelectItem value="barangay-125">Barangay 125</SelectItem>
                 </SelectContent>
@@ -114,7 +213,8 @@ export default function SettingsPage() {
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
-                defaultValue="Active community member interested in local safety and development initiatives."
+                value={formData.bio}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                 rows={3}
               />
               <p className="text-sm text-gray-500">Brief description for your profile.</p>
@@ -158,16 +258,6 @@ export default function SettingsPage() {
               </div>
               <Switch id="event-reminders" defaultChecked />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="email-notifications" className="text-base">
-                  Email Notifications
-                </Label>
-                <p className="text-sm text-gray-500">Receive notifications via email in addition to in-app alerts.</p>
-              </div>
-              <Switch id="email-notifications" />
-            </div>
           </div>
         </div>
 
@@ -176,16 +266,6 @@ export default function SettingsPage() {
         <div className="p-6">
           <h2 className="text-lg font-medium mb-4">Privacy Settings</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="profile-visibility" className="text-base">
-                  Profile Visibility
-                </Label>
-                <p className="text-sm text-gray-500">Make your profile visible to other community members.</p>
-              </div>
-              <Switch id="profile-visibility" defaultChecked />
-            </div>
-
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="location-sharing" className="text-base">
@@ -261,8 +341,32 @@ export default function SettingsPage() {
         <Separator />
 
         <div className="p-6 flex justify-end gap-3">
-          <Button variant="outline">Cancel</Button>
-          <Button>Save Changes</Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setFormData({
+              firstName: userData?.firstName || "",
+              lastName: userData?.lastName || "",
+              email: userData?.email || "",
+              barangay: userData?.barangay || "",
+              bio: userData?.bio || "",
+            })}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSaveChanges}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <div className="flex items-center gap-2">
+                <LoadingSpinner size="sm" />
+                <span>Saving...</span>
+              </div>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
         </div>
       </div>
     </div>

@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/lib/firebase/config"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -23,10 +25,43 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await verifyToken() // session key
+      // First sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+
+      // If user is not verified, redirect to verification page
+      if (!user.emailVerified) {
+        router.push("/verify")
+        return
+      }
+
+      // Then verify the token
+      await verifyToken()
       router.push("/feed")
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to login"
+      console.error("Login error:", err)
+      let errorMessage = "Failed to login"
+      
+      if (err instanceof Error) {
+        // Handle specific Firebase auth errors
+        switch (err.message) {
+          case "Firebase: Error (auth/user-not-found).":
+            errorMessage = "No account found with this email"
+            break
+          case "Firebase: Error (auth/wrong-password).":
+            errorMessage = "Incorrect password"
+            break
+          case "Firebase: Error (auth/invalid-email).":
+            errorMessage = "Invalid email address"
+            break
+          case "Firebase: Error (auth/user-disabled).":
+            errorMessage = "This account has been disabled"
+            break
+          default:
+            errorMessage = err.message
+        }
+      }
+      
       setError(errorMessage)
     } finally {
       setLoading(false)

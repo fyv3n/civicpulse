@@ -150,25 +150,11 @@ export default function ProfilePage() {
       <Tabs defaultValue="posts">
         <TabsList className="mb-6">
           <TabsTrigger value="posts">My Posts</TabsTrigger>
-          <TabsTrigger value="comments">My Comments</TabsTrigger>
-          <TabsTrigger value="saved">Saved</TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts" className="space-y-6">
           <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
             <p className="text-gray-500">No posts yet.</p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="comments">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
-            <p className="text-gray-500">No comments yet.</p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="saved">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
-            <p className="text-gray-500">No saved posts yet.</p>
           </div>
         </TabsContent>
       </Tabs>
