@@ -11,6 +11,9 @@ import { doc, getDoc, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { useToast } from "@/hooks/use-toast"
 import { sendEmailVerification } from "firebase/auth"
+import { getPostsByUserId, type Post } from "@/lib/firebase/posts"
+import PostCard from "@/components/post/post-card"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 interface UserData {
   displayName: string
@@ -34,7 +37,9 @@ function formatDate(timestamp: Timestamp) {
 export default function ProfilePage() {
   const { user } = useAuth()
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingPosts, setLoadingPosts] = useState(true)
   const [sendingVerification, setSendingVerification] = useState(false)
   const { toast } = useToast()
 
@@ -62,6 +67,34 @@ export default function ProfilePage() {
     fetchUserData()
   }, [user, toast])
 
+  useEffect(() => {
+    const fetchUserPosts = async () => {
+      if (!user) {
+        console.log("No user found, skipping post fetch")
+        return
+      }
+      
+      try {
+        setLoadingPosts(true)
+        console.log("Fetching posts for user:", user.uid)
+        const userPosts = await getPostsByUserId(user.uid)
+        console.log("Fetched posts:", userPosts)
+        setPosts(userPosts)
+      } catch (error) {
+        console.error("Error fetching user posts:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load posts"
+        })
+      } finally {
+        setLoadingPosts(false)
+      }
+    }
+
+    fetchUserPosts()
+  }, [user, toast])
+
   const handleVerify = async () => {
     if (!user) return
     setSendingVerification(true)
@@ -85,7 +118,11 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   if (!userData) {
@@ -136,11 +173,13 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-4">{userData.bio}</p>
+              <p className="text-gray-700 mb-4">{userData.bio || "No bio yet"}</p>
 
-              <Button variant="outline" size="sm">
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Profile
+              <Button variant="outline" size="sm" asChild>
+                <a href="/settings">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </a>
               </Button>
             </div>
           </div>
@@ -149,13 +188,33 @@ export default function ProfilePage() {
 
       <Tabs defaultValue="posts">
         <TabsList className="mb-6">
-          <TabsTrigger value="posts">My Posts</TabsTrigger>
+          <TabsTrigger value="posts">My Posts ({posts.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts" className="space-y-6">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
-            <p className="text-gray-500">No posts yet.</p>
-          </div>
+          {loadingPosts ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : posts.length > 0 ? (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={{
+                  ...post,
+                  id: post.id || "",
+                  createdAt: post.createdAt.toISOString(),
+                }}
+              />
+            ))
+          ) : (
+            <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
+              <p className="text-gray-500">No posts yet.</p>
+              <Button variant="outline" size="sm" className="mt-4" asChild>
+                <a href="/create">Create your first post</a>
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
