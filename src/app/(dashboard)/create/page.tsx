@@ -2,7 +2,7 @@
 
 import PostForm from "@/components/post/post-form"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuth } from "@/@auth"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import LoadingSpinner from "@/components/utilities/loading-spinner"

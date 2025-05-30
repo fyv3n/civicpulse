@@ -4,11 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { User, onAuthStateChanged } from "firebase/auth"
 import { auth } from "@/lib/firebase/config"
 import { setupVerificationListener } from "@/lib/firebase/users"
-
-interface AuthContextType {
-  user: User | null
-  loading: boolean
-}
+import { AuthContextType } from "../types"
 
 const AuthContext = createContext<AuthContextType>({
   user: null,

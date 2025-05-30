@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation"
 import { createPost } from "@/lib/firebase/posts"
 import { useToast } from "@/components/ui/use-toast"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuth } from "@/@auth"
 
 interface PostFormProps {
   onPostCreated?: () => void

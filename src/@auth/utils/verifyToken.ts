@@ -30,4 +30,4 @@ export async function verifyToken() {
   } catch (error) {
     throw error;
   }
-}
+} 

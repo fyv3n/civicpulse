@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ModeratorModeProvider } from "@/contexts/moderator-mode-context";
 import { Toaster } from "@/components/ui/toaster"
-import { AuthProvider } from "@/contexts/auth-context"
+import { AuthProvider } from "@/@auth"
 
 const inter = Inter({
   subsets: ["latin"]

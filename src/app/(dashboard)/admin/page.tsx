@@ -1,4 +1,4 @@
-import RoleGuard from "@/components/auth/role-guard"
+import { RoleGuard } from "@/@auth"
 
 export default function AdminPage() {
   return (

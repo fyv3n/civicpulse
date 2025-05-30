@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { FirebaseError } from "firebase/app"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuth } from "@/@auth"
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import type { UserProfile } from "@/lib/firebase/users"

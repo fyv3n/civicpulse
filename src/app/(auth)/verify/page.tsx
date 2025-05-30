@@ -10,6 +10,7 @@ import { onAuthStateChanged } from "firebase/auth"
 import { FirebaseError } from "firebase/app"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
 
+
 function VerifyPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
