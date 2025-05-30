@@ -69,11 +69,16 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchUserPosts = async () => {
-      if (!user) return
+      if (!user) {
+        console.log("No user found, skipping post fetch")
+        return
+      }
       
       try {
         setLoadingPosts(true)
+        console.log("Fetching posts for user:", user.uid)
         const userPosts = await getPostsByUserId(user.uid)
+        console.log("Fetched posts:", userPosts)
         setPosts(userPosts)
       } catch (error) {
         console.error("Error fetching user posts:", error)

@@ -116,6 +116,7 @@ export async function getPostsByUserId(userId: string, options?: {
   isEmergency?: boolean
 }) {
   try {
+    console.log("Getting posts for userId:", userId)
     let q = query(
       postsCollection,
       where("userId", "==", userId),
@@ -135,6 +136,9 @@ export async function getPostsByUserId(userId: string, options?: {
     }
 
     const querySnapshot = await getDocs(q)
+    console.log("Query snapshot size:", querySnapshot.size)
+    console.log("Query snapshot docs:", querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+    
     const posts = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
