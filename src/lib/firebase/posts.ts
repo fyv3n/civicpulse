@@ -108,4 +108,42 @@ export async function getPosts(options?: {
     console.error("Error getting posts:", error)
     throw error
   }
+}
+
+export async function getPostsByUserId(userId: string, options?: {
+  limit?: number
+  status?: Post["status"]
+  isEmergency?: boolean
+}) {
+  try {
+    let q = query(
+      postsCollection,
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    )
+    
+    if (options?.status) {
+      q = query(q, where("status", "==", options.status))
+    }
+    
+    if (options?.isEmergency !== undefined) {
+      q = query(q, where("isEmergency", "==", options.isEmergency))
+    }
+    
+    if (options?.limit) {
+      q = query(q, limit(options.limit))
+    }
+
+    const querySnapshot = await getDocs(q)
+    const posts = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: (doc.data().createdAt as Timestamp).toDate(),
+    })) as Post[]
+
+    return posts
+  } catch (error) {
+    console.error("Error getting user posts:", error)
+    throw error
+  }
 } 
