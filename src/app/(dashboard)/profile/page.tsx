@@ -14,6 +14,7 @@ import { sendEmailVerification } from "firebase/auth"
 import { getPostsByUserId, type Post } from "@/lib/firebase/posts"
 import PostCard from "@/components/post/post-card"
 import LoadingSpinner from "@/components/utilities/loading-spinner"
+import Link from "next/link"
 
 interface UserData {
   displayName: string
@@ -174,12 +175,12 @@ export default function ProfilePage() {
               </div>
 
               <p className="text-gray-700 mb-4">{userData.bio || "No bio yet"}</p>
-
+                
               <Button variant="outline" size="sm" asChild>
-                <a href="/settings">
+                <Link href="/settings">
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit Profile
-                </a>
+                </Link>
               </Button>
             </div>
           </div>

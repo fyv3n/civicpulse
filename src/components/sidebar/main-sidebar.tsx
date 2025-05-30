@@ -71,9 +71,9 @@ export default function MainSidebar() {
       href: "/moderation",
     },
     {
-      title: "Barangay Settings",
+      title: "Barangay Dashboard",
       icon: Building,
-      href: "/barangay-settings",
+      href: "/admin",
     },
   ]
 
