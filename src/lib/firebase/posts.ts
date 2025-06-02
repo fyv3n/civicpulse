@@ -203,6 +203,13 @@ export async function reportPost(postId: string, reason: string, reporterId: str
   }
 }
 
+interface PostUpdateData {
+  status: "verified" | "resolved" | "false_alarm"
+  updatedAt: Date
+  moderatorNote?: string
+  [key: string]: string | Date | undefined // More specific type for index signature
+}
+
 export async function updatePostStatus(
   postId: string, 
   status: "verified" | "resolved" | "false_alarm",
@@ -215,7 +222,7 @@ export async function updatePostStatus(
     const oldStatus = postDoc.data()?.status
 
     // Only include moderatorNote in the update if it's provided
-    const updateData: any = {
+    const updateData: PostUpdateData = {
       status,
       updatedAt: new Date()
     }

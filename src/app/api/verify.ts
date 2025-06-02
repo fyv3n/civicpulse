@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(200).json({ user });
-  } catch (err: any) {
+  } catch (err: Error | unknown) {
     console.error('Verify token error:', err);
     return res.status(401).json({ error: 'Unauthorized' });
   }

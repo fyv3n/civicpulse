@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,7 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
-import { collection, getDocs, query, where, orderBy, deleteDoc, doc, Timestamp, FieldValue } from "firebase/firestore"
+import { collection, getDocs, query, orderBy, deleteDoc, doc, Timestamp, FieldValue } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase/config"
 import type { UserProfile } from "@/lib/firebase/users"
 import { updateUserRole } from "@/lib/firebase/users"
@@ -59,11 +59,7 @@ export default function UserManagement() {
   const { toast } = useToast()
   const { user } = useAuth()
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const usersRef = collection(db, "users")
       const q = query(usersRef, orderBy("createdAt", "desc"))
@@ -83,7 +79,11 @@ export default function UserManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const handleRoleChange = async (userId: string, newRole: UserProfile["role"]) => {
     try {

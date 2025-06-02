@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Users, AlertTriangle, Shield, MessageSquare } from "lucide-react"
-import { collection, query, getDocs, Timestamp, FieldValue } from "firebase/firestore"
+import { collection, getDocs, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { getPosts, type Post } from "@/lib/firebase/posts"
-import { getUserProfile, type UserProfile } from "@/lib/firebase/users"
+import { type UserProfile } from "@/lib/firebase/users"
 
 interface AnalyticsData {
   totalUsers: number

@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { getPosts, type Post } from "@/lib/firebase/posts"
-import { Search, Filter } from "lucide-react"
+import { Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
 
@@ -32,11 +31,7 @@ export default function PostLogViewer() {
   const [authorFilter, setAuthorFilter] = useState<"all" | "admin" | "moderator" | "user">("all")
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const fetchedPosts = await getPosts()
       setPosts(fetchedPosts)
@@ -50,7 +45,11 @@ export default function PostLogViewer() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    fetchPosts()
+  }, [fetchPosts])
 
   const getStatusBadgeColor = (status: Post["status"]) => {
     switch (status) {

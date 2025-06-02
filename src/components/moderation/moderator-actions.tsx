@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle, XCircle, AlertTriangle, MessageSquare, Phone } from "lucide-react"
+import { CheckCircle, XCircle, AlertTriangle, Phone } from "lucide-react"
 import {
   Dialog,
   DialogContent,

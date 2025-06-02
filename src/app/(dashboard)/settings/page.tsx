@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { FirebaseError } from "firebase/app"
 import { useAuth } from "@/@auth"
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import type { UserProfile } from "@/lib/firebase/users"
 import { updateProfile } from "firebase/auth"
@@ -99,36 +99,6 @@ export default function SettingsPage() {
 
     fetchUserData()
   }, [user, router, toast])
-
-  const handleSaveChanges = async () => {
-    if (!user || !userData) return
-
-    try {
-      setIsSaving(true)
-      await updateDoc(doc(db, "users", user.uid), {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        displayName: `${formData.firstName} ${formData.lastName}`,
-        barangay: formData.barangay,
-        bio: formData.bio,
-        updatedAt: serverTimestamp()
-      })
-
-      toast({
-        title: "Success",
-        description: "Your settings have been saved."
-      })
-    } catch (error) {
-      console.error("Error saving changes:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save changes"
-      })
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
   const handleDeleteAccount = async () => {
     try {

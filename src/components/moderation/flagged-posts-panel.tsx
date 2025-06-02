@@ -64,7 +64,7 @@ export default function FlaggedPostsPanel() {
     }
   }
 
-  const handlePostStatusUpdate = (postId: string) => {
+  const handlePostStatusUpdate = () => {
     // Refresh the posts list after a status update
     fetchPosts(activeTab)
   }

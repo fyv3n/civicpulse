@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -39,13 +39,7 @@ export default function CommentsDialog({ isOpen, onOpenChange, post }: CommentsD
   const { user } = useAuth()
   const { toast } = useToast()
 
-  useEffect(() => {
-    if (isOpen) {
-      loadComments()
-    }
-  }, [isOpen, post.id])
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setIsLoading(true)
       const fetchedComments = await getComments(post.id)
@@ -60,7 +54,13 @@ export default function CommentsDialog({ isOpen, onOpenChange, post }: CommentsD
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [post.id, toast])
+
+  useEffect(() => {
+    if (isOpen) {
+      loadComments()
+    }
+  }, [isOpen, loadComments])
 
   const handleSubmitComment = async () => {
     if (!user) {

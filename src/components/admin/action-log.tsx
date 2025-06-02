@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -51,11 +51,7 @@ export default function ActionLog() {
   const [actionFilter, setActionFilter] = useState<ActionLog["actionType"] | "all">("all")
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchActionLogs()
-  }, [])
-
-  const fetchActionLogs = async () => {
+  const fetchActionLogs = useCallback(async () => {
     try {
       const logsQuery = query(
         collection(db, "action_logs"),
@@ -78,7 +74,11 @@ export default function ActionLog() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    fetchActionLogs()
+  }, [fetchActionLogs])
 
   const getActionIcon = (actionType: ActionLog["actionType"]) => {
     switch (actionType) {
