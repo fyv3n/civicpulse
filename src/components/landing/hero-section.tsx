@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export default function HeroSection() {
   return (
@@ -25,10 +26,13 @@ export default function HeroSection() {
           <div className="relative w-full max-w-sm md:max-w-md">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg blur opacity-25"></div>
             <div className="relative bg-white rounded-lg shadow-xl overflow-hidden">
-              <img
+              <Image
                 src="/placeholder.svg?height=400&width=400"
                 alt="Barangay emergency response system"
+                width={400}
+                height={400}
                 className="w-full h-auto"
+                priority
               />
             </div>
           </div>

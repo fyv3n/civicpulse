@@ -1,3 +1,35 @@
+# Thesis Project: [Your Project Title]
+*Built with LLaMA Guard 4*
+
+## 📘 Overview
+
+This repository contains the code and resources for my undergraduate/graduate thesis titled:  
+**"CivicPulse"**
+
+The project explores [brief description: e.g., "the use of large language models in automated text summarization"] and leverages **LLaMA Guard 4**, an open-source large language model developed by Meta Platforms.
+
+## 🧠 Model
+
+This project uses **LLaMA Guard 4**, provided by Meta under the LLaMA 4 Community License.  
+You can find the model and documentation here:  
+👉 [https://www.llama.com/llama-downloads](https://www.llama.com/llama-downloads)
+
+> **Note:** Any model outputs, fine-tuned versions, or research insights are academic in nature and not intended for commercial use.
+
+## 📂 Project Structure
+
+
+## ⚖️ License & Attribution
+
+This project uses the LLaMA Guard 4 model under the terms of the **LLaMA 4 Community License**.
+LLaMA 4 is licensed under the LLaMA 4 Community License,
+Copyright © Meta Platforms, Inc. All Rights Reserved.
+
+
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/feed-next-app).
 
 ## Getting Started

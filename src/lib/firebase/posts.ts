@@ -11,7 +11,10 @@ import {
   orderBy,
   limit,
   Timestamp,
+  increment,
+  getDoc
 } from "firebase/firestore"
+import { logAction } from "./action-logs"
 
 export interface Post {
   id?: string
@@ -24,12 +27,15 @@ export interface Post {
     avatar?: string
     trustScore: number
     isVerified: boolean
+    role: "admin" | "moderator" | "user"
   }
   location: string
   mediaUrls?: string[]
   isEmergency: boolean
   status: "pending" | "verified" | "resolved" | "false_alarm"
   commentCount: number
+  reportCount?: number
+  reportReason?: string
 }
 
 const postsCollection = collection(db, "posts")
@@ -149,5 +155,124 @@ export async function getPostsByUserId(userId: string, options?: {
   } catch (error) {
     console.error("Error getting user posts:", error)
     throw error
+  }
+}
+
+export async function getFlaggedPosts(status: "pending" | "verified" | "resolved" | "false_alarm" = "pending") {
+  try {
+    const postsQuery = query(
+      collection(db, "posts"),
+      where("status", "==", status),
+      where("reportCount", ">", 0),
+      orderBy("reportCount", "desc"),
+      orderBy("createdAt", "desc")
+    );
+
+    const querySnapshot = await getDocs(postsQuery);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toDate()
+    })) as Post[];
+  } catch (error) {
+    console.error("Error fetching flagged posts:", error);
+    throw error;
+  }
+}
+
+export async function reportPost(postId: string, reason: string, reporterId: string) {
+  try {
+    // Add report to reports collection
+    await addDoc(collection(db, "moderation"), {
+      postId,
+      reason,
+      reporterId,
+      createdAt: new Date(),
+      status: "pending"
+    });
+
+    // Update post's report count
+    const postRef = doc(db, "posts", postId);
+    await updateDoc(postRef, {
+      reportCount: increment(1),
+      status: "pending" // Mark as pending for moderator review
+    });
+  } catch (error) {
+    console.error("Error reporting post:", error);
+    throw error;
+  }
+}
+
+interface PostUpdateData {
+  status: "verified" | "resolved" | "false_alarm"
+  updatedAt: Date
+  moderatorNote?: string
+  [key: string]: string | Date | undefined // More specific type for index signature
+}
+
+export async function updatePostStatus(
+  postId: string, 
+  status: "verified" | "resolved" | "false_alarm",
+  moderatorNote?: string,
+  moderator?: { name: string; role: string }
+) {
+  try {
+    const postRef = doc(db, "posts", postId)
+    const postDoc = await getDoc(postRef)
+    const oldStatus = postDoc.data()?.status
+
+    // Only include moderatorNote in the update if it's provided
+    const updateData: PostUpdateData = {
+      status,
+      updatedAt: new Date()
+    }
+
+    if (moderatorNote) {
+      updateData.moderatorNote = moderatorNote
+    }
+
+    await updateDoc(postRef, updateData)
+
+    // Log the action if moderator info is provided
+    if (moderator) {
+      await logAction({
+        actionType: "post_status_update",
+        actionBy: moderator,
+        target: {
+          type: "post",
+          id: postId,
+          name: postDoc.data()?.title || "Untitled Post"
+        },
+        details: {
+          from: oldStatus,
+          to: status,
+          note: moderatorNote || undefined
+        }
+      })
+    }
+  } catch (error) {
+    console.error("Error updating post status:", error)
+    throw error
+  }
+}
+
+export async function getPostsForModeration(status: "pending" | "verified" | "resolved" | "false_alarm" = "pending") {
+  try {
+    const postsQuery = query(
+      collection(db, "posts"),
+      where("status", "==", status),
+      where("isEmergency", "==", true),
+      orderBy("createdAt", "desc")
+    );
+
+    const querySnapshot = await getDocs(postsQuery);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toDate()
+    })) as Post[];
+  } catch (error) {
+    console.error("Error fetching posts for moderation:", error);
+    throw error;
   }
 } 

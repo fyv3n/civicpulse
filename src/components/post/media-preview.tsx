@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { X } from "lucide-react"
+import Image from "next/image"
 
 interface MediaPreviewProps {
   mediaUrls: string[]
@@ -37,8 +38,14 @@ export default function MediaPreview({ mediaUrls }: MediaPreviewProps) {
                 </div>
               </div>
             ) : (
-              <div className="aspect-video bg-gray-100">
-                <img src={url || "/placeholder.svg"} alt="Media content" className="w-full h-full object-cover" />
+              <div className="aspect-video bg-gray-100 relative">
+                <Image
+                  src={url || "/placeholder.svg"}
+                  alt="Media content"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
               </div>
             )}
 
@@ -64,11 +71,15 @@ export default function MediaPreview({ mediaUrls }: MediaPreviewProps) {
             {isVideo(expandedMedia) ? (
               <video src={expandedMedia} className="max-w-full max-h-[80vh]" controls autoPlay />
             ) : (
-              <img
-                src={expandedMedia || "/placeholder.svg"}
-                alt="Expanded media"
-                className="max-w-full max-h-[80vh] object-contain"
-              />
+              <div className="relative w-full h-[80vh]">
+                <Image
+                  src={expandedMedia || "/placeholder.svg"}
+                  alt="Expanded media"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
             )}
           </div>
         </div>
