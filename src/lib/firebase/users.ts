@@ -22,6 +22,7 @@ import {
 import { Timestamp } from "firebase-admin/firestore"
 import { auth, db } from "./config"
 import { FirebaseError } from "firebase/app"
+import { logAction } from "./action-logs"
 
 export type UserRole = "user" | "admin" | "moderator"
 
@@ -34,6 +35,8 @@ export interface UserProfile {
   barangay: string
   photoURL?: string
   bio?: string
+  age?: number
+  birthday?: string
   trustScore: number
   isVerified: boolean
   role: UserRole
@@ -99,12 +102,30 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
   }
 }
 
-export async function updateUserRole(userId: string, role: UserRole): Promise<void> {
+export async function updateUserRole(userId: string, role: UserRole, adminUser: { name: string; role: string }): Promise<void> {
   try {
     const userRef = doc(db, "users", userId)
+    const userDoc = await getDoc(userRef)
+    const oldRole = userDoc.data()?.role
+
     await updateDoc(userRef, {
       role,
       updatedAt: serverTimestamp()
+    })
+
+    // Log the action
+    await logAction({
+      actionType: "user_role_update",
+      actionBy: adminUser,
+      target: {
+        type: "user",
+        id: userId,
+        name: userDoc.data()?.displayName || "Unknown User"
+      },
+      details: {
+        from: oldRole,
+        to: role
+      }
     })
   } catch (error) {
     console.error("Error updating user role:", error)

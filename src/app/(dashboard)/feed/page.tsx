@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react"
 import PostCard from "@/components/post/post-card"
 import { Button } from "@/components/ui/button"
-import { Plus, Filter } from "lucide-react"
+import { Plus, Filter} from "lucide-react"
 import { getPosts, type Post } from "@/lib/firebase/posts"
 import { auth } from "@/lib/firebase/config"
 import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
 import ScrollToTop from "@/components/ui/scroll-to-top"
+import { Timestamp } from "firebase/firestore"
+import Link from "next/link"
 
 export default function FeedPage() {
   const router = useRouter()
@@ -76,10 +78,10 @@ export default function FeedPage() {
             Filter
           </Button>
           <Button size="sm" asChild className="text-xs sm:text-sm">
-            <a href="/create">
+            <Link href="/create">
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               New Post
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -98,7 +100,7 @@ export default function FeedPage() {
               post={{
                 ...post,
                 id: post.id || "",
-                createdAt: post.createdAt.toISOString(),
+                createdAt: Timestamp.fromDate(post.createdAt)
               }}
             />
           ))

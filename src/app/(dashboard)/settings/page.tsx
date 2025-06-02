@@ -26,6 +26,15 @@ import { useAuth } from "@/@auth"
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import type { UserProfile } from "@/lib/firebase/users"
+import { updateProfile } from "firebase/auth"
+import ProfilePictureUpload from "@/components/user/profile-picture-upload"
+
+interface UserSettings {
+  displayName: string
+  bio: string
+  barangay: string
+  photoURL?: string
+}
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -43,6 +52,12 @@ export default function SettingsPage() {
     bio: "",
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [settings, setSettings] = useState<UserSettings>({
+    displayName: "",
+    bio: "",
+    barangay: "",
+    photoURL: "",
+  })
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -62,6 +77,12 @@ export default function SettingsPage() {
             email: data.email || "",
             barangay: data.barangay || "",
             bio: data.bio || "",
+          })
+          setSettings({
+            displayName: data.displayName || "",
+            bio: data.bio || "",
+            barangay: data.barangay || "",
+            photoURL: data.photoURL || "",
           })
         }
       } catch (error) {
@@ -147,6 +168,42 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    try {
+      setIsSaving(true)
+
+      // Update Auth Profile
+      await updateProfile(user, {
+        displayName: settings.displayName
+      })
+
+      // Update Firestore Document
+      const userRef = doc(db, "users", user.uid)
+      await updateDoc(userRef, {
+        displayName: settings.displayName,
+        bio: settings.bio,
+        barangay: settings.barangay,
+      })
+
+      toast({
+        title: "Settings Updated",
+        description: "Your profile settings have been saved successfully.",
+      })
+    } catch (error) {
+      console.error("Error saving settings:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -163,6 +220,15 @@ export default function SettingsPage() {
         <div className="p-6">
           <h2 className="text-lg font-medium mb-4">Profile Information</h2>
           <div className="space-y-4">
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
+              <ProfilePictureUpload
+                currentPhotoURL={settings.photoURL}
+                displayName={settings.displayName}
+                onUploadComplete={(url) => setSettings(prev => ({ ...prev, photoURL: url }))}
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first-name">First name</Label>
@@ -202,9 +268,7 @@ export default function SettingsPage() {
                   <SelectValue placeholder="Select barangay" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="barangay-123">West Bajac-Bajac</SelectItem>
-                  <SelectItem value="barangay-124">Barangay 124</SelectItem>
-                  <SelectItem value="barangay-125">Barangay 125</SelectItem>
+                  <SelectItem value="West Bajac-Bajac">West Bajac-Bajac</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -355,7 +419,7 @@ export default function SettingsPage() {
             Cancel
           </Button>
           <Button 
-            onClick={handleSaveChanges}
+            onClick={handleSubmit}
             disabled={isSaving}
           >
             {isSaving ? (

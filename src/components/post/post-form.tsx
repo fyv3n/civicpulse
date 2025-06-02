@@ -43,23 +43,6 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
       return
     }
 
-    // Force refresh user status before checking
-    try {
-      await user.reload()
-    } catch (error) {
-      console.error("Error refreshing user status:", error)
-    }
-
-    if (!user.emailVerified) {
-      toast({
-        title: "Verification Required",
-        description: "Please verify your email before creating posts",
-        variant: "destructive",
-      })
-      router.push("/verify")
-      return
-    }
-
     if (!title || !content) {
       toast({
         title: "Error",
@@ -83,7 +66,8 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
           name: user.displayName || "Anonymous",
           avatar: user.photoURL || "/placeholder.svg?height=40&width=40",
           trustScore: 0,
-          isVerified: user.emailVerified
+          isVerified: user.emailVerified,
+          role: "user"
         },
         status: "pending",
         createdAt: new Date(),
@@ -120,11 +104,6 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Create Post</h1>
-        <p className="text-gray-600 mt-1">Share information with your community</p>
-      </div>
-
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="space-y-2">
