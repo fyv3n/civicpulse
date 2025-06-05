@@ -18,20 +18,19 @@ export async function POST(req: NextRequest) {
 
     const contentHash = generateContentHash(content, title);
     const cachedAnalysisEntry = await checkCache(contentHash);
-    let analysisData: AnalysisCache['analysis']; // Expect this to be populated
+    let analysisData: AnalysisCache['analysis'];
 
     if (cachedAnalysisEntry && cachedAnalysisEntry.analysis) {
       analysisData = cachedAnalysisEntry.analysis;
       // ...
     } else {
-      // Call performAiAnalysis from cacheService (which runs Python)
+      // Perform new AI analysis
       const newAnalysis = await performAiAnalysis(title, content);
       analysisData = newAnalysis;
-      if (analysisData) { // Ensure newAnalysis is not undefined
+      if (analysisData) {
          await cacheAnalysis(contentHash, newAnalysis);
       } else {
-         // This case means performAiAnalysis (Python) itself failed to produce data
-         console.error("API Route: performAiAnalysis (Python) did not return analysis data.");
+         console.error("API Route: AI analysis failed to produce results.");
          return NextResponse.json({ error: 'AI analysis process failed to produce results' }, { status: 500 });
       }
     }
