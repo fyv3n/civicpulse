@@ -51,13 +51,15 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
     // Initialize HuggingFace client
     const hf = new InferenceClient(process.env.HUGGING_FACE_HUB_TOKEN);
     
-    // Make API request
+    // Make API request using the latest Mistral model
     const response = await hf.textGeneration({
-      model: "meta-llama/Llama-3.1-8B-Instruct",
+      model: "mistralai/Mistral-7B-Instruct-v0.3",
       inputs: prompt,
       parameters: {
         max_new_tokens: 5,
-        temperature: 0.1 // Lower temperature for more deterministic responses
+        temperature: 0.1, // Lower temperature for more deterministic responses
+        top_p: 0.95, // Add top_p for better response quality
+        repetition_penalty: 1.1 // Slight repetition penalty to avoid loops
       }
     });
     
@@ -91,7 +93,7 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
       if (isEmergency) {
         categories.push("emergency");
       }
-      categories.push("needs moderation");
+      categories.push("needs_moderation");
     } else {
       categories.push("safe");
       categories.push("verified"); // Add verified category for safe content
@@ -100,7 +102,7 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
     return {
       riskScore,
       categories,
-      confidence: 0.9, // High confidence as Llama is deterministic
+      confidence: 0.9, // High confidence as Mistral is deterministic
       explanation
     };
     
