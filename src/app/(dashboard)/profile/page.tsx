@@ -203,7 +203,7 @@ export default function ProfilePage() {
                   ...post,
                   id: post.id || "",
                   createdAt: post.createdAt.toISOString(),
-                  status: post.status === "false alarm" ? "false_alarm" : 
+                  status: post.status === "false alarm" ? "false alarm" : 
                          post.status === "auto flagged" ? "pending" : 
                          post.status
                 }}

@@ -101,9 +101,7 @@ export default function FeedPage() {
                 ...post,
                 id: post.id || "",
                 createdAt: Timestamp.fromDate(post.createdAt),
-                status: post.status === "false alarm" ? "false_alarm" : 
-                       post.status === "auto flagged" ? "pending" : 
-                       post.status
+                status: post.status
               }}
             />
           ))

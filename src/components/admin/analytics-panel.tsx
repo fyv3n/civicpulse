@@ -78,14 +78,14 @@ export default function AnalyticsPanel() {
       const posts = await getPosts()
       const emergencyPosts = posts.filter((post: Post) => post.isEmergency)
       const verifiedPosts = posts.filter((post: Post) => post.status === "verified")
-      const falseAlarms = posts.filter((post: Post) => post.status === "false_alarm")
+      const falseAlarms = posts.filter((post: Post) => post.status === "false alarm")
       
       // Calculate posts by status
       const postsByStatus = {
         pending: posts.filter((post: Post) => post.status === "pending").length,
         verified: posts.filter((post: Post) => post.status === "verified").length,
         resolved: posts.filter((post: Post) => post.status === "resolved").length,
-        false_alarm: posts.filter((post: Post) => post.status === "false_alarm").length
+        false_alarm: posts.filter((post: Post) => post.status === "false alarm").length
       }
       
       // Calculate posts by type

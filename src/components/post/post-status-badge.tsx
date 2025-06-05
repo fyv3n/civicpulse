@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Clock, XCircle, Shield } from "lucide-react"
+import { CheckCircle, Clock, XCircle, Shield, AlertTriangle } from "lucide-react"
 
 interface PostStatusBadgeProps {
-  status: "pending" | "verified" | "resolved" | "false_alarm"
+  status: "pending" | "verified" | "resolved" | "false alarm" | "auto flagged"
   aiVerified?: boolean
 }
 
@@ -38,11 +38,18 @@ export default function PostStatusBadge({ status, aiVerified }: PostStatusBadgeP
           Resolved
         </Badge>
       )
-    case "false_alarm":
+    case "false alarm":
       return (
         <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 flex items-center gap-1">
           <XCircle className="h-3 w-3" />
           False Alarm
+        </Badge>
+      )
+    case "auto flagged":
+      return (
+        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Auto Flagged
         </Badge>
       )
     default:

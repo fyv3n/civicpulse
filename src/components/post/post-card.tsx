@@ -54,7 +54,7 @@ interface PostCardProps {
     location: string
     mediaUrls?: string[]
     isEmergency: boolean
-    status: "pending" | "verified" | "resolved" | "false_alarm"
+    status: "pending" | "verified" | "resolved" | "false alarm" | "auto flagged"
     commentCount: number
     aiAnalysis?: {
       categories: string[]
