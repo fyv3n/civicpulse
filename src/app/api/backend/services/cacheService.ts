@@ -1,8 +1,7 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { createHash } from 'crypto';
-import { spawn } from 'child_process';
-import path from 'path';
+import { analyzeText } from '@/app/api/backend/services/llamaguard';
 
 export interface AnalysisCache {
   contentHash: string;
@@ -193,63 +192,25 @@ export async function performAiAnalysis(
   title: string,
   content: string
 ): Promise<AnalysisCache['analysis']> {
-  console.log(`(CacheService) Initiating Python AI analysis for title: "${title}"`);
+  console.log(`(CacheService) Initiating AI analysis for title: "${title}"`);
 
-  const scriptPath = path.join(process.cwd(), 'src', 'app', 'api', 'backend', 'services', 'llamaguard.py');
-  const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python';
-
-  return new Promise((resolve, reject) => {
-    const pythonProcess = spawn(pythonExecutable, [scriptPath, content, title]);
-
-    let stdoutData = '';
-    let stderrData = '';
-
-    pythonProcess.stdout.on('data', (data) => {
-      stdoutData += data.toString();
-    });
-
-    pythonProcess.stderr.on('data', (data) => {
-      stderrData += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-      console.log(`Python script exited with code ${code}`);
-      if (stderrData) {
-        console.error(`Python script stderr: ${stderrData}`);
-      }
-
-      if (code === 0) {
-        try {
-          const analysisResult = JSON.parse(stdoutData);
-          if (analysisResult.error) {
-            console.error(`Python script returned an error: ${analysisResult.error}`);
-            resolve({
-              riskScore: 0.5,
-              categories: ["error", "analysis_failed"],
-              confidence: 0.0,
-              explanation: `AI analysis failed: ${analysisResult.error}`
-            });
-          } else {
-            // If the content is flagged as unsafe, ensure it's marked for moderation
-            if (analysisResult.riskScore > 0.5 || analysisResult.categories.includes("unsafe")) {
-              analysisResult.categories = [...new Set([...analysisResult.categories, "needs_moderation"])];
-              analysisResult.explanation += "\nThis content has been flagged for human moderation review.";
-            }
-            resolve(analysisResult as AnalysisCache['analysis']);
-          }
-        } catch (parseError) {
-          console.error('Failed to parse Python script output:', parseError);
-          console.error('Python stdout raw for debugging:', stdoutData);
-          reject(new Error('Failed to parse AI analysis result from Python script.'));
-        }
-      } else {
-        reject(new Error(`AI analysis Python script failed with exit code ${code}. Stderr: ${stderrData}`));
-      }
-    });
-
-    pythonProcess.on('error', (err) => {
-        console.error('Failed to start Python process:', err);
-        reject(new Error('Failed to start AI analysis Python script. Check Python path and script permissions.'));
-    });
-  });
+  try {
+    const analysis = await analyzeText(content, title);
+    
+    // If the content is flagged as unsafe, ensure it's marked for moderation
+    if (analysis.riskScore > 0.5 || analysis.categories.includes("unsafe")) {
+      analysis.categories = [...new Set([...analysis.categories, "needs_moderation"])];
+      analysis.explanation += "\nThis content has been flagged for human moderation review.";
+    }
+    
+    return analysis;
+  } catch (error) {
+    console.error('Failed to perform AI analysis:', error);
+    return {
+      riskScore: 0.5,
+      categories: ["error", "analysis_failed"],
+      confidence: 0.0,
+      explanation: `AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
 }
