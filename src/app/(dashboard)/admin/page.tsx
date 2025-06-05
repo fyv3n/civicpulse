@@ -13,12 +13,12 @@ export default function AdminPage() {
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6">Barangay Dashboard</h1>
         
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs defaultValue="analytics" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="posts">Post Log</TabsTrigger>
             <TabsTrigger value="actions">Action Log</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">

@@ -11,10 +11,10 @@ import {
   orderBy,
   limit,
   Timestamp,
-  increment,
   getDoc
 } from "firebase/firestore"
 import { logAction } from "./action-logs"
+import { type AnalysisCache } from "@/app/api/backend/services/cacheService"
 
 export interface Post {
   id?: string
@@ -32,27 +32,136 @@ export interface Post {
   location: string
   mediaUrls?: string[]
   isEmergency: boolean
-  status: "pending" | "verified" | "resolved" | "false_alarm"
+  status: "pending" | "verified" | "resolved" | "false alarm" | "auto flagged"
   commentCount: number
   reportCount?: number
   reportReason?: string
+  aiAnalysis?: AnalysisCache['analysis'] | null
+  aiFlagReason?: string | null
+  combinedRiskScore?: number | null
 }
 
 const postsCollection = collection(db, "posts")
 
-export async function createPost(post: Omit<Post, "id">) {
+const MAX_USER_REPORTS_EFFECTIVE = 5
+const WEIGHT_AI_SCORE = 0.6
+const WEIGHT_USER_REPORTS = 0.4
+
+function calculateCombinedRiskScore(
+  aiAnalysis: AnalysisCache['analysis'] | undefined,
+  reportCount: number
+): number {
+  let aiScoreContribution = 0
+  if (aiAnalysis && typeof aiAnalysis.riskScore === 'number') {
+    const validAiRiskScore = Math.min(Math.max(aiAnalysis.riskScore, 0), 1)
+    aiScoreContribution = validAiRiskScore * WEIGHT_AI_SCORE
+  } else if (aiAnalysis === undefined && reportCount > 0) {
+  }
+
+  const normalizedReportContribution = reportCount > 0 
+    ? (Math.min(reportCount, MAX_USER_REPORTS_EFFECTIVE) / MAX_USER_REPORTS_EFFECTIVE) * WEIGHT_USER_REPORTS
+    : 0
+  
+  const combinedScore = aiScoreContribution + normalizedReportContribution
+  return Math.min(Math.max(combinedScore, 0), 1)
+}
+
+export async function createPost(
+  postData: Omit<
+    Post,
+    "id" | "aiAnalysis" | "aiFlagReason" | "status" | "commentCount" | "reportCount" | "createdAt" | "combinedRiskScore"
+  > & { createdAt?: Date; status?: Post["status"] }
+) {
   try {
-    if (!post.userId) {
+    if (!postData.userId) {
       throw new Error("userId is required to create a post")
+    }
+
+    let analysisData: AnalysisCache['analysis'] | undefined
+    try {
+      const response = await fetch('/api/posts/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: postData.title, content: postData.content }),
+      })
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type")
+        let errorDetails = `Status: ${response.status}`
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json()
+          errorDetails += `, Data: ${JSON.stringify(errorData)}`
+        } else {
+          const errorText = await response.text()
+          errorDetails += `, Response: ${errorText.substring(0, 100)}...`
+        }
+        console.error("Error fetching AI analysis from API:", errorDetails)
+      } else {
+        const contentType = response.headers.get("content-type")
+        if (contentType && contentType.includes("application/json")) {
+          analysisData = await response.json()
+        } else {
+          const responseText = await response.text()
+          console.error("Received non-JSON response from AI analysis API (OK status). Response:", responseText.substring(0,100) + "...")
+        }
+      }
+    } catch (apiError) {
+      console.error("Network or other error calling /api/posts/analyze:", apiError)
+    }
+
+    let status: Post["status"] = postData.status || (postData.isEmergency ? "pending" : "verified")
+    let aiFlagReason: string | undefined = undefined
+    let initialReportCount = 0
+
+    const RISK_THRESHOLD = 0.5
+
+    if (analysisData) {
+      if (analysisData.riskScore > RISK_THRESHOLD || 
+          analysisData.categories.includes("unsafe") || 
+          analysisData.categories.includes("needs_moderation")) {
+        status = "pending"
+        aiFlagReason = `AI detected potential issues (Score: ${analysisData.riskScore.toFixed(
+          2
+        )}). Categories: ${analysisData.categories.join(", ")}. Reason: ${
+          analysisData.explanation
+        }`
+        initialReportCount = 1
+      } else if (analysisData.categories.includes("verified")) {
+        status = "verified"
+        aiFlagReason = `AI verified content as safe (Score: ${analysisData.riskScore.toFixed(
+          2
+        )}). Categories: ${analysisData.categories.join(", ")}. Reason: ${
+          analysisData.explanation
+        }`
+      } else if (postData.isEmergency && status !== "pending") {
+        status = "pending"
+      }
+    }
+    
+    const combinedRiskScore = calculateCombinedRiskScore(analysisData, initialReportCount)
+
+    const finalPostData: Omit<Post, "id"> = {
+      ...postData,
+      createdAt: postData.createdAt || new Date(),
+      aiAnalysis: analysisData || null,
+      status,
+      aiFlagReason: aiFlagReason || null,
+      commentCount: 0,
+      reportCount: initialReportCount,
+      combinedRiskScore: Number.isNaN(combinedRiskScore) ? null : combinedRiskScore,
     }
     
     const docRef = await addDoc(postsCollection, {
-      ...post,
-      createdAt: Timestamp.fromDate(post.createdAt),
+      ...finalPostData,
+      createdAt: Timestamp.fromDate(finalPostData.createdAt),
     })
-    return { id: docRef.id, ...post }
+
+    console.log(`Post created with ID: ${docRef.id}, Status: ${status}, AI Flag: ${aiFlagReason || 'None'}, Combined Risk: ${combinedRiskScore?.toFixed(2) || 'N/A'}`)
+    return { id: docRef.id, ...finalPostData, createdAt: finalPostData.createdAt }
   } catch (error) {
-    console.error("Error creating post:", error)
+    console.error("Error creating post (client-side):", error)
     throw error
   }
 }
@@ -182,23 +291,79 @@ export async function getFlaggedPosts(status: "pending" | "verified" | "resolved
 
 export async function reportPost(postId: string, reason: string, reporterId: string) {
   try {
-    // Add report to reports collection
+    const postRef = doc(db, "posts", postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) {
+      throw new Error(`Post with ID ${postId} not found.`);
+    }
+
+    const postDataFromSnap = postSnap.data() as Post;
+    let currentAiAnalysis = postDataFromSnap.aiAnalysis;
+    let aiAnalysisWasFetched = false;
+
+    if (!currentAiAnalysis) {
+      console.log(`AI analysis missing for post ${postId} on client, fetching from API.`);
+      try {
+        const response = await fetch('/api/posts/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: postDataFromSnap.title, content: postDataFromSnap.content }),
+        });
+        if (response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            currentAiAnalysis = await response.json();
+            aiAnalysisWasFetched = true;
+          } else {
+            const responseText = await response.text();
+            console.error("Received non-JSON response from AI analysis API (OK status). Response:", responseText.substring(0,100) + "...");
+          }
+        } else {
+          const contentType = response.headers.get("content-type");
+          let errorDetails = `Status: ${response.status}`;
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            errorDetails += `, Data: ${JSON.stringify(errorData)}`;
+          } else {
+            const errorText = await response.text();
+            errorDetails += `, Response: ${errorText.substring(0, 100)}...`;
+          }
+          console.error("Error fetching AI analysis from API during reportPost:", errorDetails);
+        }
+      } catch (apiError) {
+        console.error("Network or other error calling /api/posts/analyze during reportPost:", apiError);
+      }
+    }
+
     await addDoc(collection(db, "moderation"), {
       postId,
       reason,
       reporterId,
       createdAt: new Date(),
-      status: "pending"
+      status: "pending",
+      aiContextAtReportTime: currentAiAnalysis || null,
     });
 
-    // Update post's report count
-    const postRef = doc(db, "posts", postId);
-    await updateDoc(postRef, {
-      reportCount: increment(1),
-      status: "pending" // Mark as pending for moderator review
-    });
+    const newReportCount = (postDataFromSnap.reportCount || 0) + 1;
+    const newCombinedRiskScore = calculateCombinedRiskScore(currentAiAnalysis === null ? undefined : currentAiAnalysis, newReportCount);
+
+    const updatePayload: Partial<Post> = {
+      reportCount: newReportCount,
+      status: "pending",
+      combinedRiskScore: Number.isNaN(newCombinedRiskScore) ? null : newCombinedRiskScore,
+    };
+
+    if (aiAnalysisWasFetched) {
+      updatePayload.aiAnalysis = currentAiAnalysis || null;
+    }
+
+    await updateDoc(postRef, updatePayload);
+
+    console.log(`Post ${postId} reported by ${reporterId} (client-side). New Combined Risk: ${newCombinedRiskScore?.toFixed(2) || 'N/A'}`);
+
   } catch (error) {
-    console.error("Error reporting post:", error);
+    console.error("Error reporting post (client-side):", error);
     throw error;
   }
 }
@@ -207,7 +372,7 @@ interface PostUpdateData {
   status: "verified" | "resolved" | "false_alarm"
   updatedAt: Date
   moderatorNote?: string
-  [key: string]: string | Date | undefined // More specific type for index signature
+  [key: string]: string | Date | undefined
 }
 
 export async function updatePostStatus(
@@ -221,7 +386,6 @@ export async function updatePostStatus(
     const postDoc = await getDoc(postRef)
     const oldStatus = postDoc.data()?.status
 
-    // Only include moderatorNote in the update if it's provided
     const updateData: PostUpdateData = {
       status,
       updatedAt: new Date()
@@ -233,7 +397,6 @@ export async function updatePostStatus(
 
     await updateDoc(postRef, updateData)
 
-    // Log the action if moderator info is provided
     if (moderator) {
       await logAction({
         actionType: "post_status_update",

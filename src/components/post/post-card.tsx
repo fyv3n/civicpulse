@@ -54,8 +54,13 @@ interface PostCardProps {
     location: string
     mediaUrls?: string[]
     isEmergency: boolean
-    status: "pending" | "verified" | "resolved" | "false_alarm"
+    status: "pending" | "verified" | "resolved" | "false alarm" | "auto flagged"
     commentCount: number
+    aiAnalysis?: {
+      categories: string[]
+      riskScore: number
+      explanation: string
+    } | null
   }
 }
 
@@ -139,7 +144,10 @@ export default function PostCard({ post: initialPost }: PostCardProps) {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap mt-2 sm:mt-0">
-            <PostStatusBadge status={post.status} />
+            <PostStatusBadge 
+              status={post.status} 
+              aiVerified={post.status === "verified" && post.aiAnalysis?.categories.includes("verified")}
+            />
             {post.isEmergency && (
               <Badge variant="destructive" className="flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />
