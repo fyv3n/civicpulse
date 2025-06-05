@@ -176,12 +176,10 @@ export default function ProfilePage() {
 
               <p className="text-gray-700 mb-4">{userData.bio || "No bio yet"}</p>
                 
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/settings">
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Link>
-              </Button>
+              <Link href="/settings" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Link>
             </div>
           </div>
         </div>
@@ -205,15 +203,18 @@ export default function ProfilePage() {
                   ...post,
                   id: post.id || "",
                   createdAt: post.createdAt.toISOString(),
+                  status: post.status === "false alarm" ? "false_alarm" : 
+                         post.status === "auto flagged" ? "pending" : 
+                         post.status
                 }}
               />
             ))
           ) : (
             <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
               <p className="text-gray-500">No posts yet.</p>
-              <Button variant="outline" size="sm" className="mt-4" asChild>
-                <a href="/create">Create your first post</a>
-              </Button>
+              <Link href="/create" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 mt-4">
+                Create your first post
+              </Link>
             </div>
           )}
         </TabsContent>

@@ -1,5 +1,3 @@
-// src/app/api/backend/index.ts
-// Load environment variables first
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -25,6 +23,7 @@ app.get('/', (req, res) => {
 app.use('/api/backend/routes/moderation', moderationRouter);
 
 // Error handling middleware
+//eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });

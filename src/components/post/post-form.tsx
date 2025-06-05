@@ -71,7 +71,6 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
         },
         status: "pending",
         createdAt: new Date(),
-        commentCount: 0,
       })
 
       toast({

@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Clock, XCircle } from "lucide-react"
+import { CheckCircle, Clock, XCircle, Shield } from "lucide-react"
 
 interface PostStatusBadgeProps {
   status: "pending" | "verified" | "resolved" | "false_alarm"
+  aiVerified?: boolean
 }
 
-export default function PostStatusBadge({ status }: PostStatusBadgeProps) {
+export default function PostStatusBadge({ status, aiVerified }: PostStatusBadgeProps) {
   switch (status) {
     case "pending":
       return (
@@ -17,8 +18,17 @@ export default function PostStatusBadge({ status }: PostStatusBadgeProps) {
     case "verified":
       return (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
-          <CheckCircle className="h-3 w-3" />
-          Verified
+          {aiVerified ? (
+            <>
+              <Shield className="h-3 w-3" />
+              AI Verified
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-3 w-3" />
+              Verified
+            </>
+          )}
         </Badge>
       )
     case "resolved":
