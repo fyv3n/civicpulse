@@ -1,4 +1,4 @@
-# Thesis Project: [Your Project Title]
+# Thesis Project: CivicPulse
 *Built with LLaMA Guard 4*
 
 ## 📘 Overview
