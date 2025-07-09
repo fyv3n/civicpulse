@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ReportStatusBadge } from "@/components/moderation/status-badge"
+import LoadingSpinner from "../utilities/loading-spinner"
 
 export default function ReportLogs() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -30,23 +31,26 @@ export default function ReportLogs() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
-  useEffect(() => {
-    fetchPosts()
-  }, [])
+const [error, setError] = useState<string | null>(null)
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true)
-      const fetchedPosts = await getPosts()
-      // Filter for reported posts only
-      const reportedPosts = fetchedPosts.filter(post => (post.reportCount || 0) > 0)
-      setPosts(reportedPosts)
-    } catch (error) {
-      console.error("Error fetching reported posts:", error)
-    } finally {
-      setLoading(false)
-    }
+useEffect(() => {
+  fetchPosts()
+}, [])
+
+const fetchPosts = async () => {
+  try {
+    setLoading(true)
+    setError(null) // Reset error state before fetching
+    const fetchedPosts = await getPosts()
+    const reportedPosts = fetchedPosts.filter(post => (post.reportCount || 0) > 0)
+    setPosts(reportedPosts)
+  } catch (error) {
+    console.error("Error fetching reported posts:", error)
+    setError("Failed loading report logs, try again.")
+  } finally {
+    setLoading(false)
   }
+}
 
   const filteredPosts = posts.filter(post => {
     const matchesSearch = 
@@ -59,12 +63,29 @@ export default function ReportLogs() {
   })
 
   if (loading) {
-    return <div className="text-center py-8">Loading report logs...</div>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
+        <LoadingSpinner />
+        <p className="mt-2 text-gray-600">Loading reported posts...</p>
+      </div>
+    )
+  }
+
+if (error) {
+  return (
+    <div className="text-center py-8 text-red-500">
+      {error}
+    </div>
+  )
+}
+
+  if (filteredPosts.length === 0) {
+    return <div className="text-center py-8">No reported posts found.</div>
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input

@@ -51,14 +51,14 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
     // Initialize HuggingFace client
     const hf = new InferenceClient(process.env.HUGGING_FACE_HUB_TOKEN);
     
-    // Make API request using gpt2 which is well-supported for text generation
+    // Make API request using gpt2 which is well-supported for text generation, the model is not final, might find something better eg deepseek
     const response = await hf.textGeneration({
       model: "gpt2",
       inputs: prompt,
       parameters: {
         max_new_tokens: 5,
         temperature: 0.1, // Lower temperature for more deterministic responses
-        top_p: 0.95, // Add top_p for better response quality
+        top_p: 0.95, // Add top_p for better response quuality
         repetition_penalty: 1.1 // Slight repetition penalty to avoid loops
       }
     });

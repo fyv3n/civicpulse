@@ -99,9 +99,9 @@ export default function FlaggedPostsPanel() {
 
         <TabsContent value="pending" className="p-4">
           {loading ? (
-            <div className="text-center py-8">
+            <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
               <LoadingSpinner />
-              <p className="mt-2 text-gray-600">Loading posts...</p>
+              <p className="mt-2 text-gray-600">Loading posts..</p>
             </div>
           ) : error ? (
             <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">
@@ -146,7 +146,7 @@ export default function FlaggedPostsPanel() {
 
         <TabsContent value="verified" className="p-4">
           {loading ? (
-            <div className="text-center py-8">
+            <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
               <LoadingSpinner />
               <p className="mt-2 text-gray-600">Loading posts...</p>
             </div>
@@ -166,7 +166,7 @@ export default function FlaggedPostsPanel() {
 
         <TabsContent value="false_alarm" className="p-4">
           {loading ? (
-            <div className="text-center py-8">
+            <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
               <LoadingSpinner />
               <p className="mt-2 text-gray-600">Loading posts...</p>
             </div>

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EmergencyStatusBadge } from "@/components/moderation/status-badge"
+import LoadingSpinner from "../utilities/loading-spinner"
 
 export default function EmergencyLogs() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -60,12 +61,17 @@ export default function EmergencyLogs() {
   })
 
   if (loading) {
-    return <div className="text-center py-8">Loading emergency logs...</div>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
+        <LoadingSpinner />
+        <p className="mt-2 text-gray-600">Loading emergency logs...</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input

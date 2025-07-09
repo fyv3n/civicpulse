@@ -47,23 +47,29 @@ export default function AIAnalysisLogs() {
   }
 
   const filteredPosts = posts.filter(post => {
-    const matchesSearch = 
+    const matchesSearch =
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategory = categoryFilter === "all" || 
+    const matchesCategory = categoryFilter === "all" ||
       post.aiAnalysis?.categories.includes(categoryFilter)
 
     return matchesSearch && matchesCategory
   })
 
   if (loading) {
-    return <LoadingSpinner />
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] gap-2">
+        <LoadingSpinner />
+        <p className="text-sm text-gray-600">Loading analysis logs...</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+      <h2 className="text-lg font-semibold mb-4">AI Analysis Logs</h2>
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -114,7 +120,7 @@ export default function AIAnalysisLogs() {
                 <TableCell>
                   <AIAnalysisRiskScoreBadge status={post.status} />
                 </TableCell>
-                <TableCell> 
+                <TableCell>
                   <Badge variant="outline">
                     {post.aiAnalysis?.confidence ? (post.aiAnalysis.confidence * 100).toFixed(0) : "N/A"}%
                   </Badge>
@@ -129,4 +135,4 @@ export default function AIAnalysisLogs() {
       </div>
     </div>
   )
-} 
+}

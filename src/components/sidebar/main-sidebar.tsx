@@ -19,14 +19,15 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
 import { auth } from "@/lib/firebase/config"
-import { getUserProfile } from "@/lib/firebase/users"
-import { UserProfile } from "@/lib/firebase/users"
+import { getUserProfile, UserProfile } from "@/lib/firebase/users"
 
 export default function MainSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [moderationOpen, setModerationOpen] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -37,57 +38,33 @@ export default function MainSidebar() {
         setUserProfile(null)
       }
     })
-
     return () => unsubscribe()
   }, [])
 
   const userMenuItems = [
-    {
-      title: "Home",
-      icon: Home,
-      href: "/feed",
-    },
-    {
-      title: "Notifications",
-      icon: Bell,
-      href: "/notifications",
-    },
-    {
-      title: "Profile",
-      icon: User,
-      href: "/profile",
-    },
-    {
-      title: "Create Post",
-      icon: PlusCircle,
-      href: "/create",
-    },
+    { title: "Home", icon: Home, href: "/feed" },
+    { title: "Notifications", icon: Bell, href: "/notifications" },
+    { title: "Profile", icon: User, href: "/profile" },
+    { title: "Create Post", icon: PlusCircle, href: "/create" },
   ]
 
-  const adminMenuItems = [
-    {
-      title: "Moderation",
-      icon: Shield,
-      href: "/moderation",
-    },
-    {
-      title: "Barangay Dashboard",
-      icon: Building,
-      href: "/admin",
-    },
+  const submenuOfModeration = [
+    { title: "Flagged Posts", icon: Shield, href: "/moderation?panel=flagged-posts" },
+    { title: "AI Analysis Logs", icon: Shield, href: "/moderation?panel=ai-logs" },
+    { title: "Emergency Logs", icon: Shield, href: "/moderation?panel=emergency-logs" },
+    { title: "Report Logs", icon: Shield, href: "/moderation?panel=report-logs" },
+  ]
+
+  const submenuOfAdmin = [
+    { title: "User Management", icon: User, href: "/admin/users" },
+    { title: "Post Log", icon: Shield, href: "/admin/post-log" },
+    { title: "Action Log", icon: Shield, href: "/admin/action-log" },
+    { title: "Analytics", icon: Shield, href: "/admin/analytics" },
   ]
 
   const bottomMenuItems = [
-    {
-      title: "Settings",
-      icon: Settings,
-      href: "/settings",
-    },
-    {
-      title: "Logout",
-      icon: LogOut,
-      href: "/",
-    },
+    { title: "Settings", icon: Settings, href: "/settings" },
+    { title: "Logout", icon: LogOut, href: "/" },
   ]
 
   return (
@@ -110,42 +87,16 @@ export default function MainSidebar() {
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 text-red-600"
-          >
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-            <path d="M12 8v4" />
-            <path d="M12 16h.01" />
-          </svg>
+          <Shield className="h-6 w-6 text-red-600" />
           <span className="text-lg font-bold">CivicPulse</span>
         </div>
       </nav>
 
       {/* Mobile Overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
 
       {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed top-16 bottom-0 left-0 z-50 flex flex-col w-64 bg-white border-r border-gray-200 transition-all duration-300 ease-in-out",
-          collapsed ? "w-16" : "w-64",
-          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        )}
-      >
-        {/* Main Menu */}
+      <aside className={cn("fixed top-16 bottom-0 left-0 z-50 flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out", collapsed ? "w-16" : "w-64", mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")}>
         <div className="flex-1 overflow-y-auto">
           <TooltipProvider delayDuration={0}>
             <div className="py-4">
@@ -155,12 +106,7 @@ export default function MainSidebar() {
                     <TooltipTrigger asChild>
                       <Link
                         href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          pathname === item.href
-                            ? "bg-red-50 text-red-600"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-                        )}
+                        className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors", pathname === item.href ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900")}
                         onClick={() => setMobileOpen(false)}
                       >
                         <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed ? "mx-auto" : "")} />
@@ -178,26 +124,65 @@ export default function MainSidebar() {
                       <p className="text-xs font-semibold text-gray-500 uppercase">Admin</p>
                     </div>
 
-                    {adminMenuItems.map((item) => (
-                      <Tooltip key={item.href} delayDuration={0}>
-                        <TooltipTrigger asChild>
+                    {/* Moderation Parent */}
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setModerationOpen(!moderationOpen)}
+                          className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors", pathname.startsWith("/moderation") ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900")}
+                        >
+                          <Shield className="h-5 w-5 flex-shrink-0" />
+                          {!collapsed && <span>Moderation</span>}
+                        </button>
+                      </TooltipTrigger>
+                      {collapsed && <TooltipContent side="right">Moderation</TooltipContent>}
+                    </Tooltip>
+
+                    {moderationOpen && !collapsed && (
+                      <div className="ml-8 flex flex-col gap-1 mt-1">
+                        {submenuOfModeration.map((item) => (
                           <Link
+                            key={item.href}
                             href={item.href}
-                            className={cn(
-                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                              pathname === item.href
-                                ? "bg-red-50 text-red-600"
-                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-                            )}
+                            className={cn("flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors", pathname === item.href ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900")}
                             onClick={() => setMobileOpen(false)}
                           >
-                            <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed ? "mx-auto" : "")} />
-                            {!collapsed && <span>{item.title}</span>}
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
                           </Link>
-                        </TooltipTrigger>
-                        {collapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-                      </Tooltip>
-                    ))}
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Barangay Dashboard Parent */}
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setAdminOpen(!adminOpen)}
+                          className={cn("flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors", pathname.startsWith("/admin") ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900")}
+                        >
+                          <Building className="h-5 w-5 flex-shrink-0" />
+                          {!collapsed && <span>Barangay Dashboard</span>}
+                        </button>
+                      </TooltipTrigger>
+                      {collapsed && <TooltipContent side="right">Barangay Dashboard</TooltipContent>}
+                    </Tooltip>
+
+                    {adminOpen && !collapsed && (
+                      <div className="ml-8 flex flex-col gap-1 mt-1">
+                        {submenuOfAdmin.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn("flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors", pathname === item.href ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900")}
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
               </nav>
@@ -215,12 +200,7 @@ export default function MainSidebar() {
                     <TooltipTrigger asChild>
                       <Link
                         href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          pathname === item.href
-                            ? "bg-red-50 text-red-600"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-                        )}
+                        className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors", pathname === item.href ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900")}
                         onClick={() => setMobileOpen(false)}
                       >
                         <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed ? "mx-auto" : "")} />

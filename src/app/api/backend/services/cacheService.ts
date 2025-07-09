@@ -25,24 +25,18 @@ export function generateContentHash(content: string, title: string): string {
   
   // Extract key emergency words and location indicators in both English and Filipino
   const emergencyWords = [
-    // English
     'fire', 'emergency', 'urgent', 'danger', 'hazard', 'accident',
-    // Filipino
     'sunog', 'sakuna', 'delikado', 'panganib', 'aksidente', 'emergency',
     'kagipitan', 'saklolo', 'tulong', 'emergency'
   ];
   
   const locationIndicators = [
-    // English
     'in', 'at', 'near', 'around', 'close to',
-    // Filipino
     'sa', 'malapit sa', 'bandang', 'nasa', 'dito sa', 'doon sa'
   ];
   
   const commonWords = [
-    // English
     'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
-    // Filipino
     'ang', 'mga', 'sa', 'ng', 'at', 'o', 'pero', 'kung', 'para', 'sa', 'ay', 'si', 'sina',
     'ni', 'nina', 'kay', 'kina', 'may', 'mayroon', 'wala', 'hindi', 'di', 'ay'
   ];
