@@ -3,7 +3,7 @@ import AdminClientPage from "./admin-client";
 
 export default function AdminPage() {
   return (
-    <RoleGuard requiredRole="admin">
+    <RoleGuard requiredRole="admin" >
       <AdminClientPage />
     </RoleGuard>
   );
