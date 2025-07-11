@@ -6,7 +6,8 @@ import ScrollToTop from "@/components/ui/scroll-to-top"
 
 export default function ModerationPage() {
   const searchParams = useSearchParams()
-  const panel = searchParams.get("panel") || "flagged-posts"
+  const panelParam = searchParams.get("panel")
+  const panel = panelParam ?? "flagged-posts"
 
   const renderContent = () => {
     switch (panel) {
