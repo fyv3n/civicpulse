@@ -49,6 +49,7 @@ import { Search, MoreVertical, Trash2, Eye, Mail, MapPin, Shield, Calendar, User
 import { useAuth } from "@/@auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { format } from "date-fns"
+import LoadingSpinner from "../utilities/loading-spinner"
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -177,7 +178,12 @@ export default function UserManagement() {
   }
 
   if (loading) {
-    return <div>Loading users...</div>
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner size="md" />
+        <span className="ml-4 text-gray-600">Loading user management...</span>
+      </div>
+    )
   }
 
   return (

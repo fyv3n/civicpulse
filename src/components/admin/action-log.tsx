@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 interface ActionLog {
   id: string
@@ -129,7 +130,12 @@ export default function ActionLog() {
   })
 
   if (loading) {
-    return <div>Loading action logs...</div>
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner size="md" />
+        <span className="ml-4 text-gray-600">Loading action logs...</span>
+      </div>
+    )
   }
 
   return (
@@ -211,4 +217,4 @@ export default function ActionLog() {
       </div>
     </div>
   )
-} 
+}

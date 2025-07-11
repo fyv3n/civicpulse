@@ -56,11 +56,12 @@ export default function MainSidebar() {
   ]
 
   const submenuOfAdmin = [
-    { title: "User Management", icon: User, href: "/admin/users" },
-    { title: "Post Log", icon: Shield, href: "/admin/post-log" },
-    { title: "Action Log", icon: Shield, href: "/admin/action-log" },
-    { title: "Analytics", icon: Shield, href: "/admin/analytics" },
+    { title: "Analytics", icon: Shield, href: "/admin?panel=analytics" },
+    { title: "User Management", icon: User, href: "/admin?panel=users" },
+    { title: "Post Log", icon: Shield, href: "/admin?panel=posts" },
+    { title: "Action Log", icon: Shield, href: "/admin?panel=actions" },
   ]
+
 
   const bottomMenuItems = [
     { title: "Settings", icon: Settings, href: "/settings" },

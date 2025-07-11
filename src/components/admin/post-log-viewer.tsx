@@ -22,6 +22,7 @@ import { getPosts, type Post } from "@/lib/firebase/posts"
 import { Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
+import LoadingSpinner from "../utilities/loading-spinner"
 
 export default function PostLogViewer() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -79,7 +80,12 @@ export default function PostLogViewer() {
   })
 
   if (loading) {
-    return <div>Loading posts...</div>
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner size="md" />
+        <span className="ml-4 text-gray-600">Loading posts logs...</span>
+      </div>
+    )
   }
 
   return (

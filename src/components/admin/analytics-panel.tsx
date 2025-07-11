@@ -7,6 +7,7 @@ import { collection, getDocs, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { getPosts, type Post } from "@/lib/firebase/posts"
 import { type UserProfile } from "@/lib/firebase/users"
+import LoadingSpinner from "@/components/utilities/loading-spinner"
 
 interface AnalyticsData {
   totalUsers: number
@@ -137,8 +138,9 @@ export default function AnalyticsPanel() {
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <p>Loading analytics...</p>
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner size="md" />
+        <span className="ml-4 text-gray-600">Loading analytics...</span>
       </div>
     )
   }
