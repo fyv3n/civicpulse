@@ -1,4 +1,4 @@
-import { analyzeText } from '@/app/api/backend/services/llamaguard';
+import { analyzeText } from '@/app/api/backend/services/deepseekService';
 
 interface AIAnalysisResult {
   riskScore: number;

@@ -1,4 +1,4 @@
-import { InferenceClient } from '@huggingface/inference';
+import OpenAI from 'openai';
 
 // Filipino emergency and harmful content keywords
 const FILIPINO_EMERGENCY_WORDS = [
@@ -26,53 +26,48 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
     // Check for emergency keywords first
     const isEmergency = containsEmergencyKeywords(content) || containsEmergencyKeywords(title);
     
-    // Prepare a more explicit prompt for content moderation with Filipino context
-    const prompt = `Content Moderation Analysis (English and Filipino):
-                  Title: ${title}
-                  Content: ${content}
+    const prompt = `Analyze the following content (title and body) for safety. The content is in English and Filipino.
 
-                  Please analyze this content for:
-                  1. Emergency situations (e.g., fires, accidents, disasters)
-                  2. Inappropriate or harmful material
-                  3. Hate speech or discrimination
-                  4. Violence or threats
-                  5. Harassment or bullying
+    Title: "${title}"
+    Content: "${content}"
 
-                  Consider both English and Filipino/Tagalog content.
-                  Emergency words in Filipino: sunog, sakuna, delikado, panganib, aksidente, etc.
+    Categories to check for:
+    1.  **Emergency situations**: Fires, accidents, natural disasters, etc.
+    2.  **Harmful content**: Violence, self-harm, hate speech, etc.
+    3.  **Community guideline violations**: Spam, harassment, etc.
 
-                  Important: If ANY part of the content contains harmful material or describes an emergency situation,
-                  even if mixed with appropriate content, the entire post should be considered unsafe.
+    If the content contains any of the above, it is 'unsafe'. Otherwise, it is 'safe'.
 
-                  Respond with ONLY one word: 'safe' if the content is completely appropriate, or 'unsafe' if it contains
-                  ANY harmful material or describes an emergency situation.
-                  Do not include any other text in your response.`;
+    Respond with a single word: 'safe' or 'unsafe'.`;
 
-    // Initialize HuggingFace client
-    const hf = new InferenceClient(process.env.HUGGING_FACE_HUB_TOKEN);
-    
-    // Make API request using gpt2 which is well-supported for text generation, the model is not final, might find something better eg deepseek
-    const response = await hf.textGeneration({
-      model: "gpt2",
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 5,
-        temperature: 0.1, // Lower temperature for more deterministic responses
-        top_p: 0.95, // Add top_p for better response quuality
-        repetition_penalty: 1.1 // Slight repetition penalty to avoid loops
-      }
+    const openai = new OpenAI({
+      apiKey: process.env.DEEPSEEK_API_TOKEN,
+      baseURL: "https://api.deepseek.com/v1",
     });
     
-    // Parse response and create analysis result
-    const responseText = response.generated_text.trim().toLowerCase();
+    const response = await openai.chat.completions.create({
+        model: "deepseek-chat",
+        messages: [
+            {
+                role: "system",
+                content: "You are a content moderator. Your task is to determine if the given text is safe or unsafe."
+            },
+            {
+                role: "user",
+                content: prompt,
+            },
+        ],
+        max_tokens: 10,
+        temperature: 0.1,
+    });
+    
+    const responseText = response.choices[0].message.content?.trim().toLowerCase() ?? 'safe';
     const isSafe = responseText.includes("safe") && !responseText.includes("unsafe");
     
-    // If emergency keywords are found, mark as unsafe
     const finalIsSafe = isSafe && !isEmergency;
     
     const riskScore = finalIsSafe ? 0.0 : 1.0;
     
-    // Generate a more detailed explanation
     let explanation = `Content analysis determined this content is ${finalIsSafe ? 'safe' : 'unsafe'} for the following reasons:\n`;
     if (!finalIsSafe) {
       if (isEmergency) {
@@ -80,11 +75,9 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
       }
       explanation += "- Contains potentially inappropriate or harmful material\n";
       explanation += "- May violate community guidelines\n";
-      explanation += "- Even if mixed with appropriate content, any harmful material requires flagging\n";
     } else {
       explanation += "- Content appears to be completely appropriate\n";
       explanation += "- No harmful material or emergency situations detected\n";
-      explanation += "- All content follows community guidelines\n";
     }
     
     const categories: string[] = [];
@@ -96,13 +89,13 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
       categories.push("needs_moderation");
     } else {
       categories.push("safe");
-      categories.push("verified"); // Add verified category for safe content
+      categories.push("verified");
     }
     
     return {
       riskScore,
       categories,
-      confidence: 0.9, // High confidence as the model is deterministic
+      confidence: 0.9,
       explanation
     };
     
@@ -113,10 +106,8 @@ async function analyzeText(content: string, title: string): Promise<AnalysisResu
 }
 
 function basicAnalysis(content: string, title: string): AnalysisResult {
-  // Only check for emergency keywords in fallback
   const isEmergency = containsEmergencyKeywords(content) || containsEmergencyKeywords(title);
   
-  // Only send to moderation if emergency keywords are detected
   if (isEmergency) {
     return {
       riskScore: 0.7,
@@ -126,7 +117,6 @@ function basicAnalysis(content: string, title: string): AnalysisResult {
     };
   }
   
-  // If no emergency keywords, consider content safe
   return {
     riskScore: 0.0,
     categories: ["safe", "verified"],

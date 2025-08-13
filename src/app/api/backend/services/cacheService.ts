@@ -1,7 +1,7 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { createHash } from 'crypto';
-import { analyzeText } from '@/app/api/backend/services/llamaguard';
+import { analyzeText } from '@/app/api/backend/services/deepseekService';
 
 export interface AnalysisCache {
   contentHash: string;
